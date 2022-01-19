@@ -21,6 +21,11 @@ function print( )
    echo -e ${LOCAL_FORMAT}${LOCAL_MESSAGE[@]}${ECHO_RESET}
 }
 
+function print_header( )
+{
+   local LOCAL_MESSAGE=$@
+   print  ${ECHO_HEADER} LOCAL_MESSAGE[@]
+}
 function print_info( )
 {
    local LOCAL_MESSAGE=$@
@@ -55,12 +60,19 @@ function print_promt( )
 }
 
 # LIST=( "A" "B" "C" )
-# print_list "${LIST[@]}"
+# print_list "${LIST[@]}" "OPTIONAL_NAME"
 function print_list( )
 {
    local LOCAL_LIST=("$@")
+   local NAME="list"
 
-   echo "list [${#LOCAL_ARRAY[@]}]"
+   if [ -z ${2+x} ]; then
+      NAME="list"
+   else
+      NAME=$2
+   fi
+
+   echo "${NAME} [${#LOCAL_ARRAY[@]}]"
    echo "{"
    for LOCAL_ITEM in ${LOCAL_LIST[*]} ; do
       echo "   ${LOCAL_ITEM}"
@@ -70,12 +82,19 @@ function print_list( )
 
 # This function do the same and 'print_list' but should be called similar to 'print_map'
 # ARRAY=( "A" "B" "C" )
-# print_array ARRAY
+# print_array ARRAY "OPTIONAL_NAME"
 function print_array( )
 {
    local -n LOCAL_ARRAY=${1}
+   local NAME="array"
 
-   echo "array [${#LOCAL_ARRAY[@]}]"
+   if [ -z ${2+x} ]; then
+      NAME="array"
+   else
+      NAME=$2
+   fi
+
+   echo "${NAME} [${#LOCAL_ARRAY[@]}]"
    echo "{"
    for LOCAL_ITEM in "${LOCAL_ARRAY[@]}"; do
       echo "   ${LOCAL_ITEM}"
@@ -85,12 +104,19 @@ function print_array( )
 }
 
 # declare -A MAP=( [one]=111 [two]=222 [three]=333 )
-# print_map MAP
+# print_map MAP "OPTIONAL_NAME"
 function print_map( )
 {
    local -n LOCAL_MAP=$1
+   local NAME="map"
 
-   echo "map [${#LOCAL_MAP[@]}]"
+   if [ -z ${2+x} ]; then
+      NAME="map"
+   else
+      NAME=$2
+   fi
+
+   echo "${NAME} [${#LOCAL_MAP[@]}]"
    echo "{"
    for KEY in "${!LOCAL_MAP[@]}"; do
       echo "   { ${KEY} -> ${LOCAL_MAP[${KEY}]} }"
