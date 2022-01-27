@@ -99,6 +99,67 @@ function array_remove( )
    LOCAL_ARRAY=( "${LOCAL_ARRAY[@]:0:${LOCAL_INDEX}}" "${LOCAL_ARRAY[@]:${LOCAL_INDEX}+1}" )
 }
 
+function array_find( )
+{
+   local -n LOCAL_LIST=${1}
+   local LOCAL_ITEM=${2}
+
+   for __ITEM__ in "${LOCAL_LIST[@]}"; do
+      if [ "${__ITEM__}" == "${LOCAL_ITEM}" ]; then
+         return 1
+      fi
+   done
+
+   return 0
+}
+
+function map_find_key( )
+{
+   local -n LOCAL_MAP=${1}
+   local LOCAL_KEY=${2}
+
+
+   for __KEY__ in "${!LOCAL_MAP[@]}"; do
+      if [ "${__KEY__}" == "${LOCAL_KEY}" ]; then
+         return 1
+      fi
+   done
+
+   return 0
+}
+
+function map_find_value( )
+{
+   local -n LOCAL_MAP=${1}
+   local LOCAL_VALUE=${2}
+
+   for __KEY__ in "${!LOCAL_MAP[@]}"; do
+      if [ "${LOCAL_MAP[${__KEY__}]}" == "${LOCAL_VALUE}" ]; then
+         return 1
+      fi
+   done
+
+   return 0
+}
+
+function map_find_key_value( )
+{
+   local -n LOCAL_MAP=${1}
+   local LOCAL_KEY=${2}
+
+
+   for __KEY__ in "${!LOCAL_MAP[@]}"; do
+      if [ "${__KEY__}" == "${LOCAL_KEY}" ]; then
+         if [ "${LOCAL_MAP[${__KEY__}]}" == "${LOCAL_VALUE}" ]; then
+            return 1
+         fi
+         return 0
+      fi
+   done
+
+   return 0
+}
+
 # This function recurcively searches all files in gived directory with given
 # extentiones.
 # Example:
