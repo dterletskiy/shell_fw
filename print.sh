@@ -21,6 +21,13 @@ function print( )
    echo -e ${LOCAL_FORMAT}${LOCAL_MESSAGE[@]}${ECHO_RESET}
 }
 
+function print_and_run( )
+{
+   echo ${1}
+   time eval ${1}
+}
+
+
 function print_header( )
 {
    local LOCAL_MESSAGE=$@
