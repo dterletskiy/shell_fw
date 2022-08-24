@@ -4,6 +4,9 @@ readonly MB=$((KB * KB))
 readonly GB=$((MB * KB))
 
 readonly FS_VFAT="vfat"
+readonly FS_FAT12="fat12"
+readonly FS_FAT16="fat16"
+readonly FS_FAT32="fat32"
 readonly FS_EXT2="ext2"
 readonly FS_EXT3="ext3"
 readonly FS_EXT4="ext4"
@@ -12,6 +15,9 @@ readonly FS_SWAP="swap"
 readonly FS_UNDEFINED="undefined"
 readonly -A FS_ACTION_MAP=(
       [${FS_VFAT}]="mkfs.vfat"
+      [${FS_FAT12}]="mkfs.vfat -F12"
+      [${FS_FAT16}]="mkfs.vfat -F16"
+      [${FS_FAT32}]="mkfs.vfat -F32"
       [${FS_EXT2}]="mkfs.ext2"
       [${FS_EXT3}]="mkfs.ext3"
       [${FS_EXT4}]="mkfs.ext4"
@@ -164,12 +170,42 @@ function format_partition( )
       umount ${PARTITION}
    fi
 
-   ${FS_ACTION_MAP[${FORMAT}]} ${PARTITION} -L ${LABEL}
+   # ${FS_ACTION_MAP[${FORMAT}]} ${PARTITION} -L ${LABEL}
+
+   if [ ${FS_VFAT} == ${FORMAT} ]; then
+      print_info "Formatting to vfat..."
+      mkfs.vfat ${PARTITION} -n ${LABEL}
+   elif [ ${FS_FAT12} == ${FORMAT} ]; then
+      print_info "Formatting to fat12..."
+      mkfs.vfat -F12 ${PARTITION} -n ${LABEL}
+   elif [ ${FS_FAT16} == ${FORMAT} ]; then
+      print_info "Formatting to fat16..."
+      mkfs.vfat -F16 ${PARTITION} -n ${LABEL}
+   elif [ ${FS_FAT32} == ${FORMAT} ]; then
+      print_info "Formatting to fat32..."
+      mkfs.vfat -F32 ${PARTITION} -n ${LABEL}
+   elif [ ${FS_EXT2} == ${FORMAT} ]; then
+      print_info "Formatting to ext2..."
+      mkfs.ext2 ${PARTITION} -L ${LABEL}
+   elif [ ${FS_EXT3} == ${FORMAT} ]; then
+      print_info "Formatting to ext3..."
+      mkfs.ext3 ${PARTITION} -L ${LABEL}
+   elif [ ${FS_EXT4} == ${FORMAT} ]; then
+      print_info "Formatting to ext4..."
+      mkfs.ext4 ${PARTITION} -L ${LABEL}
+   elif [ ${FS_EXT4_64} == ${FORMAT} ]; then
+      print_info "Formatting to ext4 64bit..."
+      mkfs.ext4 -O ^64bit ${PARTITION} -L ${LABEL}
+   elif [ ${FS_SWAP} == ${FORMAT} ]; then
+      print_info "Formatting to swap..."
+      mkswap ${PARTITION} -L ${LABEL}
+   fi
+
    return $?
 }
 
 # Usage:
-#  mount_partition /dev/sda1 /boot
+#  mount_partition <file> <mount_point>
 #  echo $?
 function mount_partition( )
 {
@@ -185,7 +221,7 @@ function mount_partition( )
    local PRE_MOUNT_POINT=$( get_partition_mount_point ${PARTITION} )
    if [[ -n ${PRE_MOUNT_POINT} ]]; then
       print_warning "Partition \'${PARTITION}\' mounted to \'${PRE_MOUNT_POINT}\' => unmount"
-      umount ${PARTITION}
+      sudo umount ${PARTITION}
       if [ $? -ne 0 ]; then return $?; fi
    fi
 
@@ -199,13 +235,37 @@ function mount_partition( )
    fi
 
    # Mount partition
-   mount ${PARTITION} ${MOUNT_POINT}
+   sudo mount ${PARTITION} ${MOUNT_POINT}
    if [ $? -ne 0 ]; then
       print_error "Can't mount \'${PARTITION}\' to \'${MOUNT_POINT}\'"
-      return $?;
+      return $?
    fi
 
    return 0;
+}
+
+# Usage:
+#  umount_partition <mount_point>
+#  or
+#  umount_partition <file>
+#  echo $?
+function umount_partition( )
+{
+   if [ $# -lt 1 ]; then
+      print_error "There must be at least 1 arguments"
+      return 1;
+   fi
+
+   local MOUNT_POINT=${1}
+
+   if [[ -n ${MOUNT_POINT} ]]; then
+      sudo umount ${MOUNT_POINT}
+      if [ $? -ne 0 ]; then
+         print_error "Can't umount \'${MOUNT_POINT}\'"
+      fi
+   fi
+
+   return $?
 }
 
 
@@ -222,14 +282,15 @@ function create_partition_image( )
    dd if=/dev/zero of=${FILE} bs=${MB} count=${SIZE}
    if [ $? -ne 0 ]; then
       print_error "Can't create file \'${FILE}\' with size \'${SIZE}\'MB"
-      return $?;
+      return $?
    fi
 
    format_partition ${FILE} ${FS} ${LABEL}
 
-   return 0;
+   return 0
 }
 
 function create_drive_image( )
 {
+   return 0
 }
