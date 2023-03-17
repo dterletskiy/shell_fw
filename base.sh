@@ -10,6 +10,12 @@ function get_current_dir_name( )
    echo ${PWD##*/}
 }
 
+function get_current_script_name( )
+{
+   # https://stackoverflow.com/a/192337
+   echo $(basename "$(test -L "$0" && readlink "$0" || echo "$0")")
+}
+
 function remove_dir( )
 {
    if [ $# -lt 1 ]; then return 2; fi
