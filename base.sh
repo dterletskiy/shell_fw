@@ -16,6 +16,11 @@ function get_current_script_name( )
    echo $(basename "$(test -L "$0" && readlink "$0" || echo "$0")")
 }
 
+function get_current_script_dir( )
+{
+   echo $( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+}
+
 function remove_dir( )
 {
    if [ $# -lt 1 ]; then return 2; fi
