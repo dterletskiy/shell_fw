@@ -66,6 +66,15 @@ function print_promt( )
    print  ${ECHO_PROMT} LOCAL_MESSAGE[@]
 }
 
+# This function prints variable name (passed as the parameter) and its value
+# print_variable "PWD"
+function print_variable( )
+{
+   local VARIABLE=${1}
+   print_info "${VARIABLE}: ${!VARIABLE}"
+}
+
+
 # LIST=( "A" "B" "C" )
 # print_list "${LIST[@]}" "OPTIONAL_NAME"
 function print_list( )
