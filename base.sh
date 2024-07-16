@@ -21,6 +21,33 @@ function get_current_script_dir( )
    echo $( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 }
 
+# 'dir_names_list' - returns to the second parameter list of all directories names
+# in the path passed in the first parameter.
+# Example:
+# DIR="..."
+# DIR_NAMES=( )
+# dir_names_list ${DIR} DIR_NAMES
+function dir_names_list( )
+{
+   local LOCAL_PATH=${1}
+   local -n RESULT=${2}
+
+   if [ ! -d "${LOCAL_PATH}" ]; then
+      echo "Error: ${LOCAL_PATH} is not a directory."
+      echo ""
+      return 1
+   fi
+
+   local DIR_LIST=$(find "${LOCAL_PATH}" -mindepth 1 -maxdepth 1 -type d)
+
+   RESULT=( )
+   for DIR in ${DIR_LIST[@]}; do
+      RESULT+=("$(basename ${DIR})")
+   done
+
+   return 0
+}
+
 function remove_dir( )
 {
    if [ $# -lt 1 ]; then return 2; fi
