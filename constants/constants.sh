@@ -1,3 +1,10 @@
+if [ -n "${__SFW_CONSTANTS_CONSTANTS_SH__}" ]; then
+   return 0
+fi
+__SFW_CONSTANTS_CONSTANTS_SH__=1
+
+
+
 readonly LOCAL_HOST="127.0.0.1"
 
 # Exit codes
