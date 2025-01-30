@@ -40,3 +40,18 @@ function enter_choice( )
    echo $LOCAL_RESULT
 }
 
+function execute( )
+{
+   local COMMAND="${@}"
+   eval "${COMMAND}"
+   local EXECUTE_STATUS=$?
+
+   if [ $? -eq 0 ]; then
+      print_ok "${COMMAND}"
+   else
+      print_error "${COMMAND}"
+   fi
+
+   return ${EXECUTE_STATUS}
+}
+
