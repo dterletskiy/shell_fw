@@ -3,6 +3,8 @@ if [ -n "${__SFW_UI_SH__}" ]; then
 fi
 __SFW_UI_SH__=1
 
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/print.sh"
+
 
 
 function press_enter( )

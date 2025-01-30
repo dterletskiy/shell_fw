@@ -3,6 +3,8 @@ if [ -n "${__SFW_DRIVE_SH__}" ]; then
 fi
 __SFW_DRIVE_SH__=1
 
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/print.sh"
+
 
 
 readonly K1024=1024

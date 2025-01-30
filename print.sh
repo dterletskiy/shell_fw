@@ -3,6 +3,9 @@ if [ -n "${__SFW_PRINT_SH__}" ]; then
 fi
 __SFW_PRINT_SH__=1
 
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/constants/console.sh"
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/constants/constants.sh"
+
 
 
 readonly SPLIT_ARGUMENTS=1
