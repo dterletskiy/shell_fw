@@ -75,6 +75,9 @@ function clone( )
 
 
 
-setup ${USER} ${EMAIL}
-setup
-clone ${URL}
+function __git_example__( )
+{
+   setup ${USER} ${EMAIL}
+   setup
+   clone ${URL}
+}
