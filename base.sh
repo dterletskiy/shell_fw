@@ -1,3 +1,10 @@
+if [ -n "${__SFW_BASE_SH__}" ]; then
+   return 0
+fi
+__SFW_BASE_SH__=1
+
+
+
 function get_current_dir( )
 {
    # echo $(cd -P -- "$(dirname -- "$0")" && pwd -P)

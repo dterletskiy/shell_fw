@@ -1,3 +1,10 @@
+if [ -n "${__SFW_UI_SH__}" ]; then
+   return 0
+fi
+__SFW_UI_SH__=1
+
+
+
 function press_enter( )
 {
    #echo -e ${ECHO_USER_INTERACTION}

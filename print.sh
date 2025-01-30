@@ -1,3 +1,10 @@
+if [ -n "${__SFW_PRINT_SH__}" ]; then
+   return 0
+fi
+__SFW_PRINT_SH__=1
+
+
+
 readonly SPLIT_ARGUMENTS=1
 
 # Building bunner data

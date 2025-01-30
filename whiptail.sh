@@ -1,3 +1,10 @@
+if [ -n "${__SFW_WHIPTAIL_SH__}" ]; then
+   return 0
+fi
+__SFW_WHIPTAIL_SH__=1
+
+
+
 # whiptail_yes_no "BACKTITLE" "TITLE" "TEXT" )
 # if [[ 0 -eq $? ]]; then
 #    echo "YES"

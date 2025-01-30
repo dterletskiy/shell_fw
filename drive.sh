@@ -1,3 +1,10 @@
+if [ -n "${__SFW_DRIVE_SH__}" ]; then
+   return 0
+fi
+__SFW_DRIVE_SH__=1
+
+
+
 readonly K1024=1024
 readonly KB=1024
 readonly MB=$((KB * KB))

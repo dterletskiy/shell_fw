@@ -1,88 +1,76 @@
-ECHO_PREFIX="\e["
+if [ -n "${__SFW_CONSTANTS_CONSOLE_SH__}" ]; then
+   return 0
+fi
+__SFW_CONSTANTS_CONSOLE_SH__=1
+
+
+
+readonly ECHO_PREFIX="\e["
 ###############
 # Formatting
 ###############
-ECHO_FORMAT_Bold=$ECHO_PREFIX"1m"
-ECHO_FORMAT_Dim=$ECHO_PREFIX"2m"
-ECHO_FORMAT_Underlined=$ECHO_PREFIX"4m"
-ECHO_FORMAT_Blink=$ECHO_PREFIX"5m"
+readonly ECHO_FORMAT_Bold=$ECHO_PREFIX"1m"
+readonly ECHO_FORMAT_Dim=$ECHO_PREFIX"2m"
+readonly ECHO_FORMAT_Underlined=$ECHO_PREFIX"4m"
+readonly ECHO_FORMAT_Blink=$ECHO_PREFIX"5m"
 # invert the foreground and background colors
-ECHO_FORMAT_Reverse=$ECHO_PREFIX"7m"
+readonly ECHO_FORMAT_Reverse=$ECHO_PREFIX"7m"
 # useful for passwords
-ECHO_FORMAT_Hidden=$ECHO_PREFIX"8m"
-ECHO_FORMAT_Reset=$ECHO_PREFIX"0m"
+readonly ECHO_FORMAT_Hidden=$ECHO_PREFIX"8m"
+readonly ECHO_FORMAT_Reset=$ECHO_PREFIX"0m"
 ###############
 # 8/16 Colors
 # Foreground (text)
 ###############
-ECHO_FG_Default=$ECHO_PREFIX"39m"
-ECHO_FG_Black=$ECHO_PREFIX"30m"
-ECHO_FG_Red=$ECHO_PREFIX"31m"
-ECHO_FG_Green=$ECHO_PREFIX"32m"
-ECHO_FG_Yellow=$ECHO_PREFIX"33m"
-ECHO_FG_Blue=$ECHO_PREFIX"34m"
-ECHO_FG_Magenta=$ECHO_PREFIX"35m"
-ECHO_FG_Cyan=$ECHO_PREFIX"36m"
-ECHO_FG_LightGray=$ECHO_PREFIX"37m"
-ECHO_FG_DarkGray=$ECHO_PREFIX"90m"
-ECHO_FG_LightRed=$ECHO_PREFIX"91m"
-ECHO_FG_LightGreen=$ECHO_PREFIX"92m"
-ECHO_FG_LightYellow=$ECHO_PREFIX"93m"
-ECHO_FG_LightBlue=$ECHO_PREFIX"94m"
-ECHO_FG_LightMagenta=$ECHO_PREFIX"95m"
-ECHO_FG_LightCyan=$ECHO_PREFIX"96m"
-ECHO_FG_White=$ECHO_PREFIX"97m"
+readonly ECHO_FG_Default=$ECHO_PREFIX"39m"
+readonly ECHO_FG_Black=$ECHO_PREFIX"30m"
+readonly ECHO_FG_Red=$ECHO_PREFIX"31m"
+readonly ECHO_FG_Green=$ECHO_PREFIX"32m"
+readonly ECHO_FG_Yellow=$ECHO_PREFIX"33m"
+readonly ECHO_FG_Blue=$ECHO_PREFIX"34m"
+readonly ECHO_FG_Magenta=$ECHO_PREFIX"35m"
+readonly ECHO_FG_Cyan=$ECHO_PREFIX"36m"
+readonly ECHO_FG_LightGray=$ECHO_PREFIX"37m"
+readonly ECHO_FG_DarkGray=$ECHO_PREFIX"90m"
+readonly ECHO_FG_LightRed=$ECHO_PREFIX"91m"
+readonly ECHO_FG_LightGreen=$ECHO_PREFIX"92m"
+readonly ECHO_FG_LightYellow=$ECHO_PREFIX"93m"
+readonly ECHO_FG_LightBlue=$ECHO_PREFIX"94m"
+readonly ECHO_FG_LightMagenta=$ECHO_PREFIX"95m"
+readonly ECHO_FG_LightCyan=$ECHO_PREFIX"96m"
+readonly ECHO_FG_White=$ECHO_PREFIX"97m"
 ###############
 # 8/16 Colors
 # Background (text)
 ###############
-ECHO_BG_Default=$ECHO_PREFIX"49m"
-ECHO_BG_Black=$ECHO_PREFIX"40m"
-ECHO_BG_Red=$ECHO_PREFIX"41m"
-ECHO_BG_Green=$ECHO_PREFIX"42m"
-ECHO_BG_Yellow=$ECHO_PREFIX"43m"
-ECHO_BG_Blue=$ECHO_PREFIX"44m"
-ECHO_BG_Magenta=$ECHO_PREFIX"45m"
-ECHO_BG_Cyan=$ECHO_PREFIX"46m"
-ECHO_BG_LightGray=$ECHO_PREFIX"47m"
-ECHO_BG_DarkGray=$ECHO_PREFIX"100m"
-ECHO_BG_LightRed=$ECHO_PREFIX"101m"
-ECHO_BG_LightGreen=$ECHO_PREFIX"102m"
-ECHO_BG_LightYellow=$ECHO_PREFIX"103m"
-ECHO_BG_LightBlue=$ECHO_PREFIX"104m"
-ECHO_BG_LightMagenta=$ECHO_PREFIX"105m"
-ECHO_BG_LightCyan=$ECHO_PREFIX"106m"
-ECHO_BG_White=$ECHO_PREFIX"107m"
+readonly ECHO_BG_Default=$ECHO_PREFIX"49m"
+readonly ECHO_BG_Black=$ECHO_PREFIX"40m"
+readonly ECHO_BG_Red=$ECHO_PREFIX"41m"
+readonly ECHO_BG_Green=$ECHO_PREFIX"42m"
+readonly ECHO_BG_Yellow=$ECHO_PREFIX"43m"
+readonly ECHO_BG_Blue=$ECHO_PREFIX"44m"
+readonly ECHO_BG_Magenta=$ECHO_PREFIX"45m"
+readonly ECHO_BG_Cyan=$ECHO_PREFIX"46m"
+readonly ECHO_BG_LightGray=$ECHO_PREFIX"47m"
+readonly ECHO_BG_DarkGray=$ECHO_PREFIX"100m"
+readonly ECHO_BG_LightRed=$ECHO_PREFIX"101m"
+readonly ECHO_BG_LightGreen=$ECHO_PREFIX"102m"
+readonly ECHO_BG_LightYellow=$ECHO_PREFIX"103m"
+readonly ECHO_BG_LightBlue=$ECHO_PREFIX"104m"
+readonly ECHO_BG_LightMagenta=$ECHO_PREFIX"105m"
+readonly ECHO_BG_LightCyan=$ECHO_PREFIX"106m"
+readonly ECHO_BG_White=$ECHO_PREFIX"107m"
 
 
 
-ECHO_RESET=${ECHO_BG_Default}${ECHO_FG_Default}${ECHO_FORMAT_Reset}
+readonly ECHO_RESET=${ECHO_BG_Default}${ECHO_FG_Default}${ECHO_FORMAT_Reset}
 
-ECHO_QUESTION=${ECHO_FG_Magenta}
-ECHO_PROMT=${ECHO_FG_Magenta}
-ECHO_USER_INTERACTION=${ECHO_FG_Magenta}
+readonly ECHO_QUESTION=${ECHO_FG_Magenta}
+readonly ECHO_PROMT=${ECHO_FG_Magenta}
+readonly ECHO_USER_INTERACTION=${ECHO_FG_Magenta}
 
-ECHO_HEADER=${ECHO_FG_LightBlue}
-ECHO_INFO=${ECHO_FG_LightYellow}
-ECHO_OK=${ECHO_FG_Green}
-ECHO_ERROR=${ECHO_FG_Red}
-ECHO_WARNING=${ECHO_FG_LightBlue}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+readonly ECHO_HEADER=${ECHO_FG_LightBlue}
+readonly ECHO_INFO=${ECHO_FG_LightYellow}
+readonly ECHO_OK=${ECHO_FG_Green}
+readonly ECHO_ERROR=${ECHO_FG_Red}
+readonly ECHO_WARNING=${ECHO_FG_LightBlue}

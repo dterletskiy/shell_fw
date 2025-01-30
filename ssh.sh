@@ -1,3 +1,10 @@
+if [ -n "${__SFW_SSH__}" ]; then
+   return 0
+fi
+__SFW_SSH__=1
+
+
+
 function ssh_command( )
 {
    local IP=${1}

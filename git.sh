@@ -1,4 +1,7 @@
-#!/usr/bin/env bash
+if [ -n "${__SFW_GIT_SH__}" ]; then
+   return 0
+fi
+__SFW_GIT_SH__=1
 
 
 
