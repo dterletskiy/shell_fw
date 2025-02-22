@@ -175,6 +175,7 @@ function __validate_parameters__( )
    done
 }
 
+# parse_arguments ${@}
 function parse_arguments( )
 {
    for option in "$@"; do
@@ -203,7 +204,7 @@ function parse_arguments( )
             fi
          elif [ ${!_TYPE_} == ${PARAMETER_TYPE_OPTION} ]; then
             if [[ ${option} == --${!_NAME_} ]]; then
-               declare "CMD_${PARAMETER}_DEFINED=${OPTION_DEFINED}"
+               eval "CMD_${PARAMETER}_DEFINED=${OPTION_DEFINED}"
                OPTION_PROCESSED=1
                break
             fi
@@ -306,6 +307,8 @@ function __define_option__( )
    eval "CMD_${LOCAL_NAME_UP}_DEFINED=${OPTION_NOT_DEFINED}"
 }
 
+# define_parameter "name" "type" \
+#    ["required/not_required" ["allowed_value_1 ... allowed_value_n" ["default_value_1 ... default_value_n"]]]
 function define_parameter( )
 {
    local LOCAL_NAME=${1}
@@ -324,6 +327,7 @@ function define_parameter( )
    __test_defined_parameter__ ${LOCAL_NAME}
 }
 
+# define_required_argument "name" ["allowed_value_1 ... allowed_value_n"]
 function define_required_argument( )
 {
    local LOCAL_NAME="${1}"
@@ -334,6 +338,7 @@ function define_required_argument( )
       "${LOCAL_ALLOWED_VALUES}" "${LOCAL_DEFAULT_VALUES}"
 }
 
+# define_optional_argument "name" ["allowed_value_1 ... allowed_value_n" ["default_value_1 ... default_value_n"]]
 function define_optional_argument( )
 {
    local LOCAL_NAME="${1}"
@@ -344,9 +349,59 @@ function define_optional_argument( )
       "${LOCAL_ALLOWED_VALUES}" "${LOCAL_DEFAULT_VALUES}"
 }
 
+# define_option "name"
 function define_option( )
 {
    local LOCAL_NAME="${1}"
 
    define_parameter "${LOCAL_NAME}" "${PARAMETER_TYPE_OPTION}"
+}
+
+# echo $( get_option "dlt" [--pos="true"] [--neg="false"] )
+function get_option( )
+{
+   local LOCAL_NAME=${1}
+
+   local LOCAL_POS_VALUE="yes"
+   local LOCAL_NEG_VALUE="no"
+   local LOCAL_ERR_VALUE="no"
+
+   for PARAMETER in "${@}"; do
+      case ${PARAMETER} in
+         --pos=*)
+            LOCAL_POS_VALUE="${PARAMETER#*=}"
+            shift
+         ;;
+         --neg=*)
+            LOCAL_NEG_VALUE="${PARAMETER#*=}"
+            shift
+         ;;
+         *)
+            :
+         ;;
+      esac
+   done
+
+   local LOCAL_NAME_UP="${LOCAL_NAME^^}"
+
+   local LOCAL_OPTION_VARIABLE_NAME="CMD_${LOCAL_NAME_UP}_DEFINED"
+   local _DEFINED_=${!LOCAL_OPTION_VARIABLE_NAME}
+   local LOCAL_RESULT=${LOCAL_ERR_VALUE}
+   # print_info "Processing option '${LOCAL_NAME}' => ${LOCAL_OPTION_VARIABLE_NAME} = ${_DEFINED_}"
+
+   if [ ${_DEFINED_} == ${OPTION_DEFINED} ]; then
+      LOCAL_RESULT=${LOCAL_POS_VALUE}
+      # print_info "option '${LOCAL_NAME}' defined"
+   elif [ ${_DEFINED_} == ${OPTION_NOT_DEFINED} ]; then
+      LOCAL_RESULT=${LOCAL_NEG_VALUE}
+      # print_info "option '${LOCAL_NAME}' not defined"
+   elif [ -z ${_DEFINED_+x} ]; then
+      LOCAL_RESULT=${LOCAL_ERR_VALUE}
+      # print_error "invalid option '${LOCAL_NAME}'"
+   else
+      LOCAL_RESULT=${LOCAL_ERR_VALUE}
+      # print_error "invalid option '${LOCAL_NAME}' = ${_DEFINED_}"
+   fi
+
+   echo ${LOCAL_RESULT}
 }
