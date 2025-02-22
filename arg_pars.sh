@@ -67,6 +67,8 @@ function __print_parameters_help__( )
       fi
       print_info ${STRING}
    done
+
+   IFS=" "
 }
 
 function __print_parameters_info__( )
@@ -106,6 +108,8 @@ function __print_parameters_info__( )
       fi
       print_info ${STRING}
    done
+
+   IFS=" "
 }
 
 function __validate_argument__( )
@@ -307,9 +311,9 @@ function __define_option__( )
    eval "CMD_${LOCAL_NAME_UP}_DEFINED=${OPTION_NOT_DEFINED}"
 }
 
-# define_parameter "name" "type" \
+# __define_parameter__ "name" "type" \
 #    ["required/not_required" ["allowed_value_1 ... allowed_value_n" ["default_value_1 ... default_value_n"]]]
-function define_parameter( )
+function __define_parameter__( )
 {
    local LOCAL_NAME=${1}
    local LOCAL_TYPE=${2}
@@ -327,25 +331,52 @@ function define_parameter( )
    __test_defined_parameter__ ${LOCAL_NAME}
 }
 
-# define_required_argument "name" ["allowed_value_1 ... allowed_value_n"]
+# define_required_argument "name" \
+#    [--allowed="allowed_value_1 ... allowed_value_n"]
 function define_required_argument( )
 {
    local LOCAL_NAME="${1}"
-   local LOCAL_ALLOWED_VALUES="${2}"
-   local LOCAL_DEFAULT_VALUES="${3}"
 
-   define_parameter "${LOCAL_NAME}" "${PARAMETER_TYPE_ARGUMENT}" "${PARAMETER_REQUIRED}" \
+   local LOCAL_ALLOWED_VALUES=""
+   local LOCAL_DEFAULT_VALUES=""
+
+   for PARAMETER in "${@}"; do
+      case ${PARAMETER} in
+         --allowed=*)
+            LOCAL_ALLOWED_VALUES="${PARAMETER#*=}"
+            shift
+         ;;
+      esac
+   done
+
+   __define_parameter__ "${LOCAL_NAME}" "${PARAMETER_TYPE_ARGUMENT}" "${PARAMETER_REQUIRED}" \
       "${LOCAL_ALLOWED_VALUES}" "${LOCAL_DEFAULT_VALUES}"
 }
 
-# define_optional_argument "name" ["allowed_value_1 ... allowed_value_n" ["default_value_1 ... default_value_n"]]
+# define_optional_argument "name" \
+#    [--allowed="allowed_value_1 ... allowed_value_n"] \
+#    [--default="default_value_1 ... default_value_n"]
 function define_optional_argument( )
 {
    local LOCAL_NAME="${1}"
-   local LOCAL_ALLOWED_VALUES="${2}"
-   local LOCAL_DEFAULT_VALUES="${3}"
 
-   define_parameter "${LOCAL_NAME}" "${PARAMETER_TYPE_ARGUMENT}" "${PARAMETER_OPTIONAL}" \
+   local LOCAL_ALLOWED_VALUES=""
+   local LOCAL_DEFAULT_VALUES=""
+
+   for PARAMETER in "${@}"; do
+      case ${PARAMETER} in
+         --allowed=*)
+            LOCAL_ALLOWED_VALUES="${PARAMETER#*=}"
+            shift
+         ;;
+         --default=*)
+            LOCAL_DEFAULT_VALUES="${PARAMETER#*=}"
+            shift
+         ;;
+      esac
+   done
+
+   __define_parameter__ "${LOCAL_NAME}" "${PARAMETER_TYPE_ARGUMENT}" "${PARAMETER_OPTIONAL}" \
       "${LOCAL_ALLOWED_VALUES}" "${LOCAL_DEFAULT_VALUES}"
 }
 
@@ -354,7 +385,7 @@ function define_option( )
 {
    local LOCAL_NAME="${1}"
 
-   define_parameter "${LOCAL_NAME}" "${PARAMETER_TYPE_OPTION}"
+   __define_parameter__ "${LOCAL_NAME}" "${PARAMETER_TYPE_OPTION}"
 }
 
 # echo $( get_option "dlt" [--pos="true"] [--neg="false"] )
@@ -404,4 +435,23 @@ function get_option( )
    fi
 
    echo ${LOCAL_RESULT}
+}
+
+# declare -a VALUES=( )
+# get_parameter_values "test" VALUES
+# print_info "${VALUES[*]}"
+function get_parameter_values( )
+{
+   local LOCAL_NAME=${1}
+   declare -n LOCAL_VALUES=${2}
+
+   local LOCAL_NAME_UP="${LOCAL_NAME^^}"
+   declare -n LOCAL_DEFINED_VALUES="CMD_${LOCAL_NAME_UP}_DEFINED_VALUES"
+
+   if [[ 0 -ne ${#LOCAL_DEFINED_VALUES[@]} ]]; then
+      LOCAL_VALUES=("${LOCAL_DEFINED_VALUES[@]}")
+   else
+      declare -n LOCAL_DEFAULT_VALUES="CMD_${LOCAL_NAME_UP}_DEFAULT_VALUES"
+      LOCAL_VALUES=("${LOCAL_DEFAULT_VALUES[@]}")
+   fi
 }
