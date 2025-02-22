@@ -437,7 +437,6 @@ function get_option( )
    echo ${LOCAL_RESULT}
 }
 
-# declare -a VALUES=( )
 # get_parameter_values "test" VALUES
 # print_info "${VALUES[*]}"
 function get_parameter_values( )
@@ -454,4 +453,23 @@ function get_parameter_values( )
       declare -n LOCAL_DEFAULT_VALUES="CMD_${LOCAL_NAME_UP}_DEFAULT_VALUES"
       LOCAL_VALUES=("${LOCAL_DEFAULT_VALUES[@]}")
    fi
+}
+
+# print_info $( get_parameter_value "test" 0 )
+function get_parameter_value( )
+{
+   local LOCAL_NAME=${1}
+   local LOCAL_INDEX=${2}
+
+   local LOCAL_VALUE=""
+   get_parameter_values ${LOCAL_NAME} VALUES
+   if [[ 0 -eq ${#VALUES[@]} ]]; then
+      LOCAL_VALUE=""
+   elif [[ ${LOCAL_INDEX} -ge ${#VALUES[@]} ]]; then
+      LOCAL_VALUE=${VALUES[-1]}
+   else
+      LOCAL_VALUE=${VALUES[${LOCAL_INDEX}]}
+   fi
+
+   echo ${LOCAL_VALUE}
 }
