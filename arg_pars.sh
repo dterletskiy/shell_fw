@@ -455,11 +455,18 @@ function get_parameter_values( )
    fi
 }
 
-# print_info $( get_parameter_value "test" 0 )
+# This method returns the value of the parameter with name defined in the first argument
+# and by index optionally defined in the second argument. If index is not passed 0 will
+# be used by default.
+# If parameter was not passed in the command line then default values will be processed.
+# print_info $( get_parameter_value "name" [index] )
 function get_parameter_value( )
 {
    local LOCAL_NAME=${1}
-   local LOCAL_INDEX=${2}
+   local LOCAL_INDEX=0
+   if [[ 1 -lt ${@} ]]; then
+      LOCAL_INDEX=${2}
+   fi
 
    local LOCAL_VALUE=""
    get_parameter_values ${LOCAL_NAME} VALUES
