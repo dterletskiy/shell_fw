@@ -7,7 +7,7 @@ source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/print.sh"
 
 
 
-function compile_dt( )
+function dt_compile( )
 {
    local IN_DTS=${1}
    local OUT_DTB=${2}
@@ -16,7 +16,7 @@ function compile_dt( )
    execute "${COMMAND}"
 }
 
-function decompile_dt( )
+function dt_decompile( )
 {
    local IN_DTB=${1}
    local OUT_DTS=${2}
