@@ -1,7 +1,7 @@
-if [ -n "${__SFW_GLOBAL_SH__}" ]; then
+if [ -n "${__SFW__INIT__}" ]; then
    return 0
 fi
-__SFW_GLOBAL_SH__=1
+__SFW__INIT__=1
 
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/arg_pars.sh"
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/base.sh"
