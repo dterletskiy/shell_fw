@@ -14,6 +14,7 @@ function dt_compile( )
 
    local COMMAND="dtc -I dts -O dtb -o ${OUT_DTB} ${IN_DTS}"
    execute "${COMMAND}"
+   return $?
 }
 
 function dt_decompile( )
@@ -23,4 +24,5 @@ function dt_decompile( )
 
    local COMMAND="dtc -I dtb -O dts -o ${OUT_DTS} ${IN_DTB}"
    execute "${COMMAND}"
+   return $?
 }

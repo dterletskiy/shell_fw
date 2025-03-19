@@ -55,7 +55,7 @@ function execute( )
    eval "${COMMAND}"
    local EXECUTE_STATUS=$?
 
-   if [ $? -eq 0 ]; then
+   if [ ${EXECUTE_STATUS} -eq 0 ]; then
       print_ok "${COMMAND}"
    else
       print_error "${COMMAND}"
