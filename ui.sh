@@ -52,15 +52,15 @@ function enter_choice( )
 function execute( )
 {
    local COMMAND="${@}"
+   print_info "EXECUTE START: '${COMMAND}'"
    eval "${COMMAND}"
    local EXECUTE_STATUS=$?
 
    if [ ${EXECUTE_STATUS} -eq 0 ]; then
-      print_ok "${COMMAND}"
+      print_ok "EXECUTE FINISH (${EXECUTE_STATUS}): '${COMMAND}'"
    else
-      print_error "${COMMAND}"
+      print_error "EXECUTE FINISH (${EXECUTE_STATUS}): '${COMMAND}'"
    fi
 
    return ${EXECUTE_STATUS}
 }
-
