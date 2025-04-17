@@ -68,18 +68,44 @@ function print_old( )
    echo -e ${LOCAL_FORMAT}${LOCAL_MESSAGE[@]}${ECHO_RESET}
 }
 
+PRINT_WITH_IMAGES=0
+
 function print( )
 {
+   declare -A __TRACE_TYPE_TO_COLOR__=(
+      [HEADER]=${ECHO_HEADER}
+      [INFO]=${ECHO_INFO}
+      [OK]=${ECHO_OK}
+      [ERROR]=${ECHO_ERROR}
+      [WARNING]=${ECHO_WARNING}
+      [QUESTION]=${ECHO_QUESTION}
+      [PROMT]=${ECHO_PROMT}
+   )
+
+   declare -A __TRACE_TYPE_TO_IMAGE__=(
+      [HEADER]=📌
+      [INFO]=ℹ️
+      [OK]=✅
+      [ERROR]=❌
+      [WARNING]=⚠️
+      [QUESTION]=❓
+      [PROMT]=💬
+   )
+
    local LOCAL_FORMAT=$1
    local LOCAL_MESSAGE=("${!2}")
 
+   if [[ 0 -ne ${PRINT_WITH_IMAGES} ]]; then
+      printf "${__TRACE_TYPE_TO_IMAGE__[$LOCAL_FORMAT]}: "
+   fi
+
    if [[ 0 -eq ${SPLIT_ARGUMENTS} ]]; then
       # No split arguments
-      printf "${LOCAL_FORMAT}%s${ECHO_RESET}" ${LOCAL_MESSAGE[@]}
+      printf "${__TRACE_TYPE_TO_COLOR__[$LOCAL_FORMAT]}%s${ECHO_RESET}" ${LOCAL_MESSAGE[@]}
       printf "\n"
    else
       # Split arguments
-      printf "${LOCAL_FORMAT}%s${ECHO_RESET}\n" "${LOCAL_MESSAGE[@]}"
+      printf "${__TRACE_TYPE_TO_COLOR__[$LOCAL_FORMAT]}%s${ECHO_RESET}\n" "${LOCAL_MESSAGE[@]}"
    fi
 }
 
@@ -93,39 +119,39 @@ function print_and_run( )
 function print_header( )
 {
    local LOCAL_MESSAGE=$@
-   print  ${ECHO_HEADER} LOCAL_MESSAGE[@]
+   print HEADER LOCAL_MESSAGE[@]
 }
 function print_info( )
 {
    local LOCAL_MESSAGE=$@
-   print  ${ECHO_INFO} LOCAL_MESSAGE[@]
+   print INFO LOCAL_MESSAGE[@]
 }
 function print_ok( )
 {
    local LOCAL_MESSAGE=$@
-   print  ${ECHO_OK} LOCAL_MESSAGE[@]
+   print OK LOCAL_MESSAGE[@]
 }
 function print_error( )
 {
    local LOCAL_MESSAGE=$@
-   print  ${ECHO_ERROR} LOCAL_MESSAGE[@]
+   print ERROR LOCAL_MESSAGE[@]
 }
 function print_warning( )
 {
    local LOCAL_MESSAGE=$@
-   print  ${ECHO_WARNING} LOCAL_MESSAGE[@]
+   print WARNING LOCAL_MESSAGE[@]
 }
 
 function print_question( )
 {
    local LOCAL_MESSAGE=$@
-   print  ${ECHO_QUESTION} LOCAL_MESSAGE[@]
+   print QUESTION LOCAL_MESSAGE[@]
 }
 
 function print_promt( )
 {
    local LOCAL_MESSAGE=$@
-   print  ${ECHO_PROMT} LOCAL_MESSAGE[@]
+   print PROMT LOCAL_MESSAGE[@]
 }
 
 # This function prints variable name (passed as the parameter) and its value
