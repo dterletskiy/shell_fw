@@ -84,7 +84,9 @@ function print( )
 
    declare -A __TRACE_TYPE_TO_IMAGE__=(
       [HEADER]=📌
+      [HEADER1]=📢
       [INFO]=ℹ️
+      [INFO1]=💡
       [OK]=✅
       [ERROR]=❌
       [WARNING]=⚠️
