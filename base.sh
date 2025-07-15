@@ -269,13 +269,15 @@ function parse_range( )
             done
          else
             print_error "Error: invalid range '${token}' (end is less then begin)"
-            exit 2
+            return 1
          fi
       else
             print_error "Error: invalid '${token}'"
-            exit 2
+            return 1
       fi
    done
+
+   return 0
 }
 
 function test_parse_range( )
