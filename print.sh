@@ -50,6 +50,49 @@ function print_text_in_bunner( )
    printf "${FORMAT}\n" "${DELIMITER_1}"
 }
 
+function print_time_bar( )
+{
+   local LOCAL_TIME=${1}
+   local LOCAL_BAR_WIDTH=${2}
+
+   if [ -z "${LOCAL_BAR_WIDTH}" ]; then
+      LOCAL_BAR_WIDTH=100
+   elif ! [[ "${LOCAL_BAR_WIDTH}" =~ ^[0-9]+$ ]]; then
+      return 1
+   elif [ "${CMD_TIME}" -le 0 ]; then
+      LOCAL_BAR_WIDTH=100
+   fi
+
+   echo
+   echo
+   for sec in $(seq 1 "${LOCAL_TIME}"); do
+      local left=$(( LOCAL_TIME - sec ))
+      local percent=$(( sec * 100 / LOCAL_TIME ))
+      local filled=$(( sec * LOCAL_BAR_WIDTH / LOCAL_TIME ))
+      local empty=$(( LOCAL_BAR_WIDTH - filled ))
+
+      local bar=$(printf "%0.s#" $(seq 1 $filled))
+      bar="$bar$(printf "%0.s-" $(seq 1 $empty))"
+
+      # Select color
+      if [ $percent -lt 50 ]; then
+         COLOR=${ECHO_OK}
+      elif [ $percent -lt 80 ]; then
+         COLOR=${ECHO_WARNING}
+      else
+         COLOR=${ECHO_ERROR}
+      fi
+
+      # Move cursor up 2 lines, overwrite both lines
+      echo -ne "\033[2A"   # Move cursor up 2 lines
+      echo -e "\rElapsed: ${sec}s | Remaining: ${left}s\033[K"  # First line
+      echo -e "${COLOR}[${bar}] ${percent}%${ECHO_RESET}\033[K"    # Second line
+      # echo -ne "\r${COLOR}[${bar}] ${percent}%${ECHO_RESET} | Elapsed: ${sec}s | Remaining: ${left}s"
+      sleep 1
+   done
+   echo
+}
+
 function action_begin( )
 {
    print_text_in_bunner $@
