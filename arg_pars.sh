@@ -36,39 +36,7 @@ function __split_string_add_to_array__( )
 
 function __print_parameters_help__( )
 {
-   for _PARAMETER_ in "${CMD_PARAMETERS[@]}"; do
-      local PARAMETER=${_PARAMETER_^^}
-      local _NAME_="CMD_${PARAMETER}_NAME"
-      local _TYPE_="CMD_${PARAMETER}_TYPE"
-
-      IFS=","
-
-      local STRING="--${!_NAME_}:"$'\n'
-      STRING+="   type: '${!_TYPE_}'"$'\n'
-      if [ ${!_TYPE_} == ${PARAMETER_TYPE_ARGUMENT} ]; then
-         local _ALLOWED_VALUES_="CMD_${PARAMETER}_ALLOWED_VALUES"
-         local _DEFAULT_VALUES_="CMD_${PARAMETER}_DEFAULT_VALUES"
-         local _REQUIRED_="CMD_${PARAMETER}_REQUIRED"
-
-         STRING+="   required: '${!_REQUIRED_}'"$'\n'
-
-         declare -n __ALLOWED_ARRAY__=${_ALLOWED_VALUES_}
-         STRING+="   allowed values: '${__ALLOWED_ARRAY__[*]}' (${#__ALLOWED_ARRAY__[@]})"$'\n'
-
-         declare -n __DEFAULT_ARRAY__=${_DEFAULT_VALUES_}
-         STRING+="   default values: '${__DEFAULT_ARRAY__[*]}' (${#__DEFAULT_ARRAY__[@]})"$'\n'
-      elif [ ${!_TYPE_} == ${PARAMETER_TYPE_OPTION} ]; then
-         local _DEFINED_="CMD_${PARAMETER}_DEFINED"
-
-         STRING+=""
-      else
-         print_error "undefined parameter type: '${PARAMETER}'"
-         exit 1
-      fi
-      print_info ${STRING}
-   done
-
-   IFS=" "
+   __print_parameters_info__
 }
 
 function __print_parameters_info__( )
@@ -78,10 +46,11 @@ function __print_parameters_info__( )
       local _NAME_="CMD_${PARAMETER}_NAME"
       local _TYPE_="CMD_${PARAMETER}_TYPE"
 
+      local IFS_BACKUP=${IFS}
       IFS=","
 
-      local STRING="--${!_NAME_}:"$'\n'
-      STRING+="   type: '${!_TYPE_}'"$'\n'
+      local STRING_NAME="--${!_NAME_}:"
+      local STRING="   type: '${!_TYPE_}'"$'\n'
       if [ ${!_TYPE_} == ${PARAMETER_TYPE_ARGUMENT} ]; then
          local _ALLOWED_VALUES_="CMD_${PARAMETER}_ALLOWED_VALUES"
          local _DEFAULT_VALUES_="CMD_${PARAMETER}_DEFAULT_VALUES"
@@ -90,14 +59,16 @@ function __print_parameters_info__( )
 
          STRING+="   required: '${!_REQUIRED_}'"$'\n'
 
+         STRING+="   values:"$'\n'
+
          declare -n __ALLOWED_ARRAY__=${_ALLOWED_VALUES_}
-         STRING+="   allowed values: '${__ALLOWED_ARRAY__[*]}' (${#__ALLOWED_ARRAY__[@]})"$'\n'
+         STRING+="      allowed [${#__ALLOWED_ARRAY__[@]}]: '${__ALLOWED_ARRAY__[*]}'"$'\n'
 
          declare -n __DEFAULT_ARRAY__=${_DEFAULT_VALUES_}
-         STRING+="   default values: '${__DEFAULT_ARRAY__[*]}' (${#__DEFAULT_ARRAY__[@]})"$'\n'
+         STRING+="      default [${#__DEFAULT_ARRAY__[@]}]: '${__DEFAULT_ARRAY__[*]}'"$'\n'
 
          declare -n __DEFINED_ARRAY__=${_DEFINED_VALUES_}
-         STRING+="   defined values: '${__DEFINED_ARRAY__[*]}' (${#__DEFINED_ARRAY__[@]})"$'\n'
+         STRING+="      defined [${#__DEFINED_ARRAY__[@]}]: '${__DEFINED_ARRAY__[*]}'"$'\n'
       elif [ ${!_TYPE_} == ${PARAMETER_TYPE_OPTION} ]; then
          local _DEFINED_="CMD_${PARAMETER}_DEFINED"
 
@@ -106,10 +77,12 @@ function __print_parameters_info__( )
          print_error "undefined parameter type: '${PARAMETER}'"
          exit 1
       fi
+      print_ok ${STRING_NAME}
       print_info ${STRING}
    done
 
-   IFS=" "
+   # IFS=" "
+   IFS=${IFS_BACKUP}
 }
 
 function __validate_argument__( )
@@ -202,13 +175,14 @@ function parse_arguments( )
                   print_error "'--${!_NAME_}' is defined but has no value"
                   exit 1
                fi
-               __split_string_add_to_array__ "${__TEMP__}" ${OPTION_DELIMITER} ${_DEFINED_VALUES_}
+               __split_string_add_to_array__ "${__TEMP__}" \
+                        ${OPTION_DELIMITER} ${_DEFINED_VALUES_}
                OPTION_PROCESSED=1
                break
             fi
          elif [ ${!_TYPE_} == ${PARAMETER_TYPE_OPTION} ]; then
             if [[ ${option} == --${!_NAME_} ]]; then
-               eval "CMD_${PARAMETER}_DEFINED=${OPTION_DEFINED}"
+               declare "CMD_${PARAMETER}_DEFINED=${OPTION_DEFINED}"
                OPTION_PROCESSED=1
                break
             fi
@@ -279,6 +253,16 @@ function __test_defined_parameter__( )
    fi
 }
 
+# Calling this function like this:
+# __define_parameter__ "xxxxx" "ARGUMENT" \
+#    ["REQUIRED" ["allowed_value_1 ... allowed_value_n" ["default_value_1 ... default_value_n"]]]
+# automatically defined next varuables:
+#    - CMD_XXXXX_NAME="xxxxx"
+#    - CMD_XXXXX_TYPE="ARGUMENT"
+#    - CMD_XXXXX_REQUIRED="REQUIRED"
+#    - CMD_XXXXX_ALLOVED_VALUES=( "allowed_value_1" ... "allowed_value_n" )
+#    - CMD_XXXXX_DEFAULT_VALUES=( "default_value_1" ... "default_value_n" )
+#    - CMD_XXXXX_DEFINED_VALUES=( )
 function __define_argument__( )
 {
    local LOCAL_NAME=${1}
@@ -299,6 +283,12 @@ function __define_argument__( )
    declare -ag "CMD_${LOCAL_NAME_UP}_DEFINED_VALUES=( )"
 }
 
+# Calling this function like this:
+# __define_parameter__ "xxxxx" "OPTION"
+# automatically defined next varuables:
+#    - CMD_XXXXX_NAME="xxxxx"
+#    - CMD_XXXXX_TYPE="OPTION"
+#    - CMD_XXXXX_DEFINED="UNDEFINED"
 function __define_option__( )
 {
    local LOCAL_NAME=${1}
@@ -311,8 +301,8 @@ function __define_option__( )
    eval "CMD_${LOCAL_NAME_UP}_DEFINED=${OPTION_NOT_DEFINED}"
 }
 
-# __define_parameter__ "name" "type" \
-#    ["required/not_required" ["allowed_value_1 ... allowed_value_n" ["default_value_1 ... default_value_n"]]]
+# __define_parameter__ "name" "ARGUMENT|OPTION" \
+#    ["REQUIRED|OPTIONAL" ["allowed_value_1 ... allowed_value_n" ["default_value_1 ... default_value_n"]]]
 function __define_parameter__( )
 {
    local LOCAL_NAME=${1}
@@ -349,8 +339,10 @@ function define_required_argument( )
       esac
    done
 
-   __define_parameter__ "${LOCAL_NAME}" "${PARAMETER_TYPE_ARGUMENT}" "${PARAMETER_REQUIRED}" \
-      "${LOCAL_ALLOWED_VALUES}" "${LOCAL_DEFAULT_VALUES}"
+   __define_parameter__ "${LOCAL_NAME}" "${PARAMETER_TYPE_ARGUMENT}" \
+      "${PARAMETER_REQUIRED}" \
+      "${LOCAL_ALLOWED_VALUES}" \
+      "${LOCAL_DEFAULT_VALUES}"
 }
 
 # define_optional_argument "name" \
@@ -376,8 +368,10 @@ function define_optional_argument( )
       esac
    done
 
-   __define_parameter__ "${LOCAL_NAME}" "${PARAMETER_TYPE_ARGUMENT}" "${PARAMETER_OPTIONAL}" \
-      "${LOCAL_ALLOWED_VALUES}" "${LOCAL_DEFAULT_VALUES}"
+   __define_parameter__ "${LOCAL_NAME}" "${PARAMETER_TYPE_ARGUMENT}" \
+      "${PARAMETER_OPTIONAL}" \
+      "${LOCAL_ALLOWED_VALUES}" \
+      "${LOCAL_DEFAULT_VALUES}"
 }
 
 # define_option "name"
@@ -463,10 +457,7 @@ function get_parameter_values( )
 function get_parameter_value( )
 {
    local LOCAL_NAME=${1}
-   local LOCAL_INDEX=0
-   if [[ 1 -lt ${@} ]]; then
-      LOCAL_INDEX=${2}
-   fi
+   local LOCAL_INDEX=${2:-0}
 
    local LOCAL_VALUE=""
    get_parameter_values ${LOCAL_NAME} VALUES
@@ -480,3 +471,161 @@ function get_parameter_value( )
 
    echo ${LOCAL_VALUE}
 }
+
+
+
+# Usage example:
+#
+# ----------------------------------------------------------------------
+# #!/bin/bash
+#
+# source ./sfw/__init__
+#
+# define_required_argument "action" \
+#    --allowed="fetch config build install"
+#
+# define_optional_argument "target" \
+#    --allowed="framework application all" \
+#    --default="all"
+#
+# define_option "debug"
+#
+# parse_arguments "${@}"
+#
+# print_info $( get_option "debug" --pos="true" --neg="false" )
+#
+# get_parameter_values "action" VALUES
+# print_info "${VALUES[*]}"
+#
+# print_info $( get_parameter_value "target" 0 )
+#
+# ----------------------------------------------------------------------
+#
+# ./__test__ --action=fetch --debug --action=config,build
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+__define_argument_ext__( )
+{
+   local name="$1"
+   local type="$2"
+   local required="$3"
+   local allowed_src="$4"
+   local default_src="$5"
+
+   # Преобразуем имя аргумента в верхний регистр
+   local name_up="${name^^}"
+
+   # Создаём глобальные переменные (безопасно, без eval)
+   declare -g "CMD_${name_up}_NAME=$name"
+   declare -g "CMD_${name_up}_TYPE=$type"
+   declare -g "CMD_${name_up}_REQUIRED=$required"
+
+   # Создаём пустые глобальные массивы
+   declare -g -a "CMD_${name_up}_ALLOWED_VALUES=()"
+   declare -g -a "CMD_${name_up}_DEFAULT_VALUES=()"
+   declare -g -a "CMD_${name_up}_DEFINED_VALUES=()"
+
+   # Создаём ссылки на эти массивы
+   local -n allowed_ref="CMD_${name_up}_ALLOWED_VALUES"
+   local -n default_ref="CMD_${name_up}_DEFAULT_VALUES"
+
+   # ---- Определяем разрешённые значения ----
+   if [[ -n "$allowed_src" ]]; then
+      if declare -p "${allowed_src%%[@]}" &>/dev/null; then
+         # Если передано имя массива (array[@])
+         local -n tmp_allowed="${allowed_src%%[@]}"
+         allowed_ref=("${tmp_allowed[@]}")
+      else
+         # Иначе разбиваем строку по пробелам
+         read -r -a allowed_ref <<< "$allowed_src"
+      fi
+   fi
+
+   # ---- Определяем значения по умолчанию ----
+   if [[ -n "$default_src" ]]; then
+      if declare -p "${default_src%%[@]}" &>/dev/null; then
+         # Если передано имя массива
+         local -n tmp_default="${default_src%%[@]}"
+         default_ref=("${tmp_default[@]}")
+      else
+         read -r -a default_ref <<< "$default_src"
+      fi
+   fi
+}
+
+__print_defined_argument_info__( )
+{
+   local name="$1"
+
+   if [[ -z "$name" ]]; then
+      echo "Usage: __print_defined_argument_info__ <argument_name>" >&2
+      return 1
+   fi
+
+   local name_up="${name^^}"
+
+   local vars=(
+      "CMD_${name_up}_NAME"
+      "CMD_${name_up}_TYPE"
+      "CMD_${name_up}_REQUIRED"
+      "CMD_${name_up}_ALLOWED_VALUES"
+      "CMD_${name_up}_DEFAULT_VALUES"
+      "CMD_${name_up}_DEFINED_VALUES"
+   )
+
+   echo "=== Argument info: ${name} ==="
+
+   for var in "${vars[@]}"; do
+      if ! declare -p "$var" &>/dev/null; then
+         printf "%-35s : <not defined>\n" "$var"
+         continue
+      fi
+
+      local decl
+      decl=$(declare -p "$var" 2>/dev/null)
+
+      if [[ "$decl" =~ "declare -a" ]]; then
+         # массив
+         local -n arr="$var"
+         printf "%-35s : [array] %s\n" "$var" "${arr[*]}"
+      else
+         # обычная переменная
+         printf "%-35s : %s\n" "$var" "${!var}"
+      fi
+   done
+
+   echo "=========================================="
+}
+
+# Usage:
+# __define_argument_ext__ "test" "ARGUMENT" "REQUIRED" \
+#    "value_1 value_2 value_3" \
+#    "value_1 value_2"
+# __print_defined_argument_info__ "test"
+#
+# declare ALLOWED=( value_1 value_2 value_3 )
+# declare DEFAULT=( value_1 value_2 )
+# __define_argument_ext__ "test_1" "ARGUMENT" "REQUIRED" \
+#    ALLOWED \
+#    DEFAULT
+# __print_defined_argument_info__ "test_1"
