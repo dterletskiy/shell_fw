@@ -8,20 +8,24 @@ source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/constants
 
 
 
-readonly SPLIT_ARGUMENTS=1
+readonly __SWF_SPLIT_ARGUMENTS__=1
+readonly __SWF_PRINT_WITH_COLOR__=1
+readonly __SWF_PRINT_WITH_IMAGES__=1
+readonly __SWF_PRINT_WITH_FORMAT__=1
+readonly __SWF_PRINT_WITH_TIMESTAMP__=1
 
 # Building bunner data
-readonly DELIMITER_CHAR="-"
-readonly SIDE_CHAR="|"
-readonly SPACE_CHAR=" "
+readonly __SWF_DELIMITER_CHAR__="-"
+readonly __SWF_SIDE_CHAR__="|"
+readonly __SWF_SPACE_CHAR__=" "
 
-readonly BANNER_LENGTH=200
+readonly __SWF_BANNER_LENGTH__=200
 
-readonly DELIMITER_1="+"$(printf "%$(( BANNER_LENGTH - 2 ))s" | tr ' ' "${DELIMITER_CHAR}")"+"
-readonly DELIMITER_1_LENGTH=$(echo -n "${DELIMITER_1}" | wc -c)
+readonly __SWF_DELIMITER_1__="+"$(printf "%$(( __SWF_BANNER_LENGTH__ - 2 ))s" | tr ' ' "${__SWF_DELIMITER_CHAR__}")"+"
+readonly __SWF_DELIMITER_1_LENGTH__=$(echo -n "${__SWF_DELIMITER_1__}" | wc -c)
 
-readonly DELIMITER_2="||"$(printf "%$(( BANNER_LENGTH - 4 ))s" | tr ' ' "${SPACE_CHAR}")"||"
-readonly DELIMITER_2_LENGTH=$(echo -n "${DELIMITER_2}" | wc -c)
+readonly __SWF_DELIMITER_2__="||"$(printf "%$(( __SWF_BANNER_LENGTH__ - 4 ))s" | tr ' ' "${__SWF_SPACE_CHAR__}")"||"
+readonly __SWF_DELIMITER_2_LENGTH__=$(echo -n "${__SWF_DELIMITER_2__}" | wc -c)
 
 
 
@@ -30,10 +34,10 @@ function print_text_in_bunner( )
    local TEXT=${1}
    local TEXT_LENGTH=$(echo -n "${TEXT}" | wc -c)
 
-   local SIDE_SPACE_COUNT=$(( ( BANNER_LENGTH - TEXT_LENGTH - 2 ) / 2 ))
-   local SIDE_SPACE=$(printf "%${SIDE_SPACE_COUNT}s" | tr ' ' "${SPACE_CHAR}")
-   local SPACE_ADD_COUNT=$(( ( BANNER_LENGTH - TEXT_LENGTH - 2 ) % 2 ))
-   local SPACE_ADD=$(printf "%${SPACE_ADD_COUNT}s" | tr ' ' "${SPACE_CHAR}")
+   local SIDE_SPACE_COUNT=$(( ( __SWF_BANNER_LENGTH__ - TEXT_LENGTH - 2 ) / 2 ))
+   local SIDE_SPACE=$(printf "%${SIDE_SPACE_COUNT}s" | tr ' ' "${__SWF_SPACE_CHAR__}")
+   local SPACE_ADD_COUNT=$(( ( __SWF_BANNER_LENGTH__ - TEXT_LENGTH - 2 ) % 2 ))
+   local SPACE_ADD=$(printf "%${SPACE_ADD_COUNT}s" | tr ' ' "${__SWF_SPACE_CHAR__}")
 
    local BG_COLOR=${ECHO_BG_LightYellow}
    local FG_COLOR=${ECHO_FG_Red}
@@ -41,13 +45,13 @@ function print_text_in_bunner( )
    local COLOR_RESET=${ECHO_RESET}
    local FORMAT=${COLOR}%s${COLOR_RESET}
 
-   printf "${FORMAT}\n" "${DELIMITER_1}"
-   printf "${FORMAT}\n" "${DELIMITER_2}"
-   printf "${FORMAT}\n" "${DELIMITER_2}"
-   printf "${FORMAT}\n" "${SIDE_CHAR}${SIDE_SPACE}${TEXT}${SIDE_SPACE}${SPACE_ADD}${SIDE_CHAR}"
-   printf "${FORMAT}\n" "${DELIMITER_2}"
-   printf "${FORMAT}\n" "${DELIMITER_2}"
-   printf "${FORMAT}\n" "${DELIMITER_1}"
+   printf "${FORMAT}\n" "${__SWF_DELIMITER_1__}"
+   printf "${FORMAT}\n" "${__SWF_DELIMITER_2__}"
+   printf "${FORMAT}\n" "${__SWF_DELIMITER_2__}"
+   printf "${FORMAT}\n" "${__SWF_SIDE_CHAR__}${SIDE_SPACE}${TEXT}${SIDE_SPACE}${SPACE_ADD}${__SWF_SIDE_CHAR__}"
+   printf "${FORMAT}\n" "${__SWF_DELIMITER_2__}"
+   printf "${FORMAT}\n" "${__SWF_DELIMITER_2__}"
+   printf "${FORMAT}\n" "${__SWF_DELIMITER_1__}"
 }
 
 function print_time_bar( )
@@ -111,8 +115,6 @@ function print_old( )
    echo -e ${LOCAL_FORMAT}${LOCAL_MESSAGE[@]}${ECHO_RESET}
 }
 
-PRINT_WITH_IMAGES=0
-
 function print( )
 {
    declare -A __TRACE_TYPE_TO_COLOR__=(
@@ -137,20 +139,49 @@ function print( )
       [PROMT]=💬
    )
 
+   declare -A __TRACE_TYPE_TO_TEXT__=(
+      [HEADER]="HEADER"
+      [HEADER1]="HEADER"
+      [INFO]="INFO"
+      [INFO1]="INFO"
+      [OK]="SUCCESS"
+      [ERROR]="ERROR"
+      [WARNING]="WARNING"
+      [QUESTION]="QUESTION"
+      [PROMT]="PROMT"
+   )
+
+
    local LOCAL_FORMAT=$1
    local LOCAL_MESSAGE=("${!2}")
 
-   if [[ 0 -ne ${PRINT_WITH_IMAGES} ]]; then
-      printf "${__TRACE_TYPE_TO_IMAGE__[$LOCAL_FORMAT]}: "
+   if [[ 0 -ne ${__SWF_PRINT_WITH_TIMESTAMP__} ]]; then
+      printf "[$(date '+%Y-%m-%d %H:%M:%S')]   "
    fi
 
-   if [[ 0 -eq ${SPLIT_ARGUMENTS} ]]; then
+   if [[ 0 -ne ${__SWF_PRINT_WITH_IMAGES__} ]]; then
+      local emoji="${__TRACE_TYPE_TO_IMAGE__[$LOCAL_FORMAT]}"
+      printf "%s%-4s" "$emoji" ""
+   fi
+
+   if [[ 0 -ne ${__SWF_PRINT_WITH_FORMAT__} ]]; then
+      printf "%-12s" "[${__TRACE_TYPE_TO_TEXT__[$LOCAL_FORMAT]}]"
+   fi
+
+   local COLOR=""
+   local RESET_COLOR=""
+   if [[ 0 -ne ${__SWF_PRINT_WITH_COLOR__} ]]; then
+      COLOR="${__TRACE_TYPE_TO_COLOR__[$LOCAL_FORMAT]}"
+      RESET_COLOR="${ECHO_RESET}"
+   fi
+
+   if [[ 0 -eq ${__SWF_SPLIT_ARGUMENTS__} ]]; then
       # No split arguments
-      printf "${__TRACE_TYPE_TO_COLOR__[$LOCAL_FORMAT]}%s${ECHO_RESET}" ${LOCAL_MESSAGE[@]}
+      printf "${COLOR}%s${RESET_COLOR}" ${LOCAL_MESSAGE[@]}
       printf "\n"
    else
       # Split arguments
-      printf "${__TRACE_TYPE_TO_COLOR__[$LOCAL_FORMAT]}%s${ECHO_RESET}\n" "${LOCAL_MESSAGE[@]}"
+      printf "${COLOR}%s${RESET_COLOR}\n" "${LOCAL_MESSAGE[@]}"
    fi
 }
 
