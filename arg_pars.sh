@@ -9,16 +9,16 @@ source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/ui.sh"
 
 
 
-readonly OPTION_DELIMITER=","
+readonly __SFW_OPTION_DELIMITER__=","
 
-readonly PARAMETER_REQUIRED="REQUIRED"
-readonly PARAMETER_OPTIONAL="OPTIONAL"
+readonly __SFW_PARAMETER_REQUIRED__="REQUIRED"
+readonly __SFW_PARAMETER_OPTIONAL__="OPTIONAL"
 
-readonly PARAMETER_TYPE_ARGUMENT="ARGUMENT"
-readonly PARAMETER_TYPE_OPTION="OPTION"
+readonly __SFW_PARAMETER_TYPE_ARGUMENT__="ARGUMENT"
+readonly __SFW_PARAMETER_TYPE_OPTION__="OPTION"
 
-readonly OPTION_DEFINED="DEFINED"
-readonly OPTION_NOT_DEFINED="UNDEFINED"
+readonly __SFW_OPTION_DEFINED__="DEFINED"
+readonly __SFW_OPTION_NOT_DEFINED__="UNDEFINED"
 
 declare -a CMD_PARAMETERS=( )
 
@@ -51,7 +51,7 @@ function __print_parameters_info__( )
 
       local STRING_NAME="--${!_NAME_}:"
       local STRING="   type: '${!_TYPE_}'"$'\n'
-      if [ ${!_TYPE_} == ${PARAMETER_TYPE_ARGUMENT} ]; then
+      if [ ${!_TYPE_} == ${__SFW_PARAMETER_TYPE_ARGUMENT__} ]; then
          local _ALLOWED_VALUES_="CMD_${PARAMETER}_ALLOWED_VALUES"
          local _DEFAULT_VALUES_="CMD_${PARAMETER}_DEFAULT_VALUES"
          local _DEFINED_VALUES_="CMD_${PARAMETER}_DEFINED_VALUES"
@@ -69,7 +69,7 @@ function __print_parameters_info__( )
 
          declare -n __DEFINED_ARRAY__=${_DEFINED_VALUES_}
          STRING+="      defined [${#__DEFINED_ARRAY__[@]}]: '${__DEFINED_ARRAY__[*]}'"$'\n'
-      elif [ ${!_TYPE_} == ${PARAMETER_TYPE_OPTION} ]; then
+      elif [ ${!_TYPE_} == ${__SFW_PARAMETER_TYPE_OPTION__} ]; then
          local _DEFINED_="CMD_${PARAMETER}_DEFINED"
 
          STRING+="   defined: '${!_DEFINED_}'"$'\n'
@@ -93,7 +93,7 @@ function __validate_argument__( )
    local LOCAL_PARAMETER_CRITICAL=${4}
 
    if [[ 0 -eq ${#LOCAL_PARAMETER_DEFINED_VALUES[@]} ]]; then
-      if [[ "${PARAMETER_REQUIRED}" == "${LOCAL_PARAMETER_CRITICAL}" ]]; then
+      if [[ "${__SFW_PARAMETER_REQUIRED__}" == "${LOCAL_PARAMETER_CRITICAL}" ]]; then
          print_error "'${LOCAL_PARAMETER_NAME}' is not defined but it is required"
          exit 1
       fi
@@ -120,7 +120,7 @@ function __validate_option__( )
    local LOCAL_OPTION_NAME=${1}
    local LOCAL_OPTION_DEFINED=${2}
 
-   if [ "${LOCAL_OPTION_DEFINED}" == "${OPTION_DEFINED}" ]; then
+   if [ "${LOCAL_OPTION_DEFINED}" == "${__SFW_OPTION_DEFINED__}" ]; then
       # print_info "'${LOCAL_OPTION_NAME}' defined"
       :
    else
@@ -137,12 +137,12 @@ function __validate_parameters__( )
       local _TYPE_="CMD_${PARAMETER}_TYPE"
 
       # print_info "Validating parameter: '${PARAMETER}'"
-      if [ ${!_TYPE_} == ${PARAMETER_TYPE_ARGUMENT} ]; then
+      if [ ${!_TYPE_} == ${__SFW_PARAMETER_TYPE_ARGUMENT__} ]; then
          local _DEFINED_VALUES_="CMD_${PARAMETER}_DEFINED_VALUES"
          local _ALLOWED_VALUES_="CMD_${PARAMETER}_ALLOWED_VALUES"
          local _REQUIRED_="CMD_${PARAMETER}_REQUIRED"
          __validate_argument__ ${!_NAME_} ${_DEFINED_VALUES_} ${_ALLOWED_VALUES_} ${!_REQUIRED_}
-      elif [ ${!_TYPE_} == ${PARAMETER_TYPE_OPTION} ]; then
+      elif [ ${!_TYPE_} == ${__SFW_PARAMETER_TYPE_OPTION__} ]; then
          local _DEFINED_="CMD_${PARAMETER}_DEFINED"
          __validate_option__ ${!_NAME_} ${!_DEFINED_}
       else
@@ -168,7 +168,7 @@ function parse_arguments( )
          local _TYPE_="CMD_${PARAMETER}_TYPE"
          local _DEFINED_VALUES_="CMD_${PARAMETER}_DEFINED_VALUES"
 
-         if [ ${!_TYPE_} == ${PARAMETER_TYPE_ARGUMENT} ]; then
+         if [ ${!_TYPE_} == ${__SFW_PARAMETER_TYPE_ARGUMENT__} ]; then
             if [[ ${option} == --${!_NAME_}=* ]]; then
                local __TEMP__="${option#*=}"
                if [ -z "${__TEMP__}" ]; then
@@ -176,13 +176,13 @@ function parse_arguments( )
                   exit 1
                fi
                __split_string_add_to_array__ "${__TEMP__}" \
-                        ${OPTION_DELIMITER} ${_DEFINED_VALUES_}
+                        ${__SFW_OPTION_DELIMITER__} ${_DEFINED_VALUES_}
                OPTION_PROCESSED=1
                break
             fi
-         elif [ ${!_TYPE_} == ${PARAMETER_TYPE_OPTION} ]; then
+         elif [ ${!_TYPE_} == ${__SFW_PARAMETER_TYPE_OPTION__} ]; then
             if [[ ${option} == --${!_NAME_} ]]; then
-               declare "CMD_${PARAMETER}_DEFINED=${OPTION_DEFINED}"
+               declare "CMD_${PARAMETER}_DEFINED=${__SFW_OPTION_DEFINED__}"
                OPTION_PROCESSED=1
                break
             fi
@@ -220,7 +220,7 @@ function __test_defined_parameter__( )
       exit 1
    fi
 
-   if [ ${!_TYPE_} == ${PARAMETER_TYPE_ARGUMENT} ]; then
+   if [ ${!_TYPE_} == ${__SFW_PARAMETER_TYPE_ARGUMENT__} ]; then
       local _REQUIRED_="CMD_${LOCAL_NAME_UP}_REQUIRED"
       if [ -z ${!_REQUIRED_+x} ]; then
          print_error "'${_REQUIRED_}' is not defined"
@@ -241,7 +241,7 @@ function __test_defined_parameter__( )
       if ! declare -p ${_DEFINED_VALUES_} 2>/dev/null | grep -q 'declare -a'; then
          print_error "'${_DEFINED_VALUES_}' is not defined 3"
       fi
-   elif [ ${!_TYPE_} == ${PARAMETER_TYPE_OPTION} ]; then
+   elif [ ${!_TYPE_} == ${__SFW_PARAMETER_TYPE_OPTION__} ]; then
       local _DEFINED_="CMD_${LOCAL_NAME_UP}_DEFINED"
       if [ -z ${!_DEFINED_+x} ]; then
          print_error "'${_DEFINED_}' is not defined"
@@ -276,7 +276,7 @@ function __define_argument__( )
    local LOCAL_NAME_UP="${LOCAL_NAME^^}"
 
    declare -g "CMD_${LOCAL_NAME_UP}_NAME=${LOCAL_NAME}"
-   declare -g "CMD_${LOCAL_NAME_UP}_TYPE=${PARAMETER_TYPE_ARGUMENT}"
+   declare -g "CMD_${LOCAL_NAME_UP}_TYPE=${__SFW_PARAMETER_TYPE_ARGUMENT__}"
    declare -g "CMD_${LOCAL_NAME_UP}_REQUIRED=${LOCAL_REQUIRED}"
    declare -ag "CMD_${LOCAL_NAME_UP}_ALLOWED_VALUES=(\"\${LOCAL_PARAMETER_VALUES_ALLOWED[@]}\")"
    declare -ag "CMD_${LOCAL_NAME_UP}_DEFAULT_VALUES=(\"\${LOCAL_PARAMETER_VALUES_DEFAULT[@]}\")"
@@ -297,8 +297,8 @@ function __define_option__( )
    local LOCAL_NAME_UP="${LOCAL_NAME^^}"
 
    eval "readonly CMD_${LOCAL_NAME_UP}_NAME=\"${LOCAL_NAME}\""
-   eval "readonly CMD_${LOCAL_NAME_UP}_TYPE=${PARAMETER_TYPE_OPTION}"
-   eval "CMD_${LOCAL_NAME_UP}_DEFINED=${OPTION_NOT_DEFINED}"
+   eval "readonly CMD_${LOCAL_NAME_UP}_TYPE=${__SFW_PARAMETER_TYPE_OPTION__}"
+   eval "CMD_${LOCAL_NAME_UP}_DEFINED=${__SFW_OPTION_NOT_DEFINED__}"
 }
 
 # __define_parameter__ "name" "ARGUMENT|OPTION" \
@@ -308,9 +308,9 @@ function __define_parameter__( )
    local LOCAL_NAME=${1}
    local LOCAL_TYPE=${2}
 
-   if [ ${LOCAL_TYPE} == ${PARAMETER_TYPE_ARGUMENT} ]; then
+   if [ ${LOCAL_TYPE} == ${__SFW_PARAMETER_TYPE_ARGUMENT__} ]; then
       __define_argument__ "$@"
-   elif [ ${LOCAL_TYPE} == ${PARAMETER_TYPE_OPTION} ]; then
+   elif [ ${LOCAL_TYPE} == ${__SFW_PARAMETER_TYPE_OPTION__} ]; then
       __define_option__ "$@"
    else
       print_error "undefined parameter type: '${LOCAL_NAME}'"
@@ -339,8 +339,8 @@ function define_required_argument( )
       esac
    done
 
-   __define_parameter__ "${LOCAL_NAME}" "${PARAMETER_TYPE_ARGUMENT}" \
-      "${PARAMETER_REQUIRED}" \
+   __define_parameter__ "${LOCAL_NAME}" "${__SFW_PARAMETER_TYPE_ARGUMENT__}" \
+      "${__SFW_PARAMETER_REQUIRED__}" \
       "${LOCAL_ALLOWED_VALUES}" \
       "${LOCAL_DEFAULT_VALUES}"
 }
@@ -368,8 +368,8 @@ function define_optional_argument( )
       esac
    done
 
-   __define_parameter__ "${LOCAL_NAME}" "${PARAMETER_TYPE_ARGUMENT}" \
-      "${PARAMETER_OPTIONAL}" \
+   __define_parameter__ "${LOCAL_NAME}" "${__SFW_PARAMETER_TYPE_ARGUMENT__}" \
+      "${__SFW_PARAMETER_OPTIONAL__}" \
       "${LOCAL_ALLOWED_VALUES}" \
       "${LOCAL_DEFAULT_VALUES}"
 }
@@ -379,7 +379,7 @@ function define_option( )
 {
    local LOCAL_NAME="${1}"
 
-   __define_parameter__ "${LOCAL_NAME}" "${PARAMETER_TYPE_OPTION}"
+   __define_parameter__ "${LOCAL_NAME}" "${__SFW_PARAMETER_TYPE_OPTION__}"
 }
 
 # echo $( get_option "dlt" [--pos="true"] [--neg="false"] )
@@ -414,10 +414,10 @@ function get_option( )
    local LOCAL_RESULT=${LOCAL_ERR_VALUE}
    # print_info "Processing option '${LOCAL_NAME}' => ${LOCAL_OPTION_VARIABLE_NAME} = ${_DEFINED_}"
 
-   if [ ${_DEFINED_} == ${OPTION_DEFINED} ]; then
+   if [ ${_DEFINED_} == ${__SFW_OPTION_DEFINED__} ]; then
       LOCAL_RESULT=${LOCAL_POS_VALUE}
       # print_info "option '${LOCAL_NAME}' defined"
-   elif [ ${_DEFINED_} == ${OPTION_NOT_DEFINED} ]; then
+   elif [ ${_DEFINED_} == ${__SFW_OPTION_NOT_DEFINED__} ]; then
       LOCAL_RESULT=${LOCAL_NEG_VALUE}
       # print_info "option '${LOCAL_NAME}' not defined"
    elif [ -z ${_DEFINED_+x} ]; then
