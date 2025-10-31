@@ -7,31 +7,31 @@ source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/print.sh"
 
 
 
-readonly K1024=1024
-readonly KB=1024
-readonly MB=$((KB * KB))
-readonly GB=$((MB * KB))
+readonly __SWF_K1024__=1024
+readonly __SWF_KB__=1024
+readonly __SWF_MB__=$((__SWF_KB__ * __SWF_KB__))
+readonly __SWF_GB__=$((__SWF_MB__ * __SWF_KB__))
 
-readonly FS_VFAT="vfat"
-readonly FS_FAT12="fat12"
-readonly FS_FAT16="fat16"
-readonly FS_FAT32="fat32"
-readonly FS_EXT2="ext2"
-readonly FS_EXT3="ext3"
-readonly FS_EXT4="ext4"
-readonly FS_EXT4_64="ext4_64"
-readonly FS_SWAP="swap"
-readonly FS_UNDEFINED="undefined"
-readonly -A FS_ACTION_MAP=(
-      [${FS_VFAT}]="mkfs.vfat"
-      [${FS_FAT12}]="mkfs.vfat -F12"
-      [${FS_FAT16}]="mkfs.vfat -F16"
-      [${FS_FAT32}]="mkfs.vfat -F32"
-      [${FS_EXT2}]="mkfs.ext2"
-      [${FS_EXT3}]="mkfs.ext3"
-      [${FS_EXT4}]="mkfs.ext4"
-      [${FS_EXT4_64}]="mkfs.ext4 -O ^64bit"
-      [${FS_SWAP}]="swap"
+readonly __SWF_FS_VFAT__="vfat"
+readonly __SWF_FS_FAT12__="fat12"
+readonly __SWF_FS_FAT16__="fat16"
+readonly __SWF_FS_FAT32__="fat32"
+readonly __SWF_FS_EXT2__="ext2"
+readonly __SWF_FS_EXT3__="ext3"
+readonly __SWF_FS_EXT4__="ext4"
+readonly __SWF_FS_EXT4_64__="ext4_64"
+readonly __SWF_FS_SWAP__="swap"
+readonly __SWF_FS_UNDEFINED__="undefined"
+readonly -A __SWF_FS_ACTION_MAP__=(
+      [${__SWF_FS_VFAT__}]="mkfs.vfat"
+      [${__SWF_FS_FAT12__}]="mkfs.vfat -F12"
+      [${__SWF_FS_FAT16__}]="mkfs.vfat -F16"
+      [${__SWF_FS_FAT32__}]="mkfs.vfat -F32"
+      [${__SWF_FS_EXT2__}]="mkfs.ext2"
+      [${__SWF_FS_EXT3__}]="mkfs.ext3"
+      [${__SWF_FS_EXT4__}]="mkfs.ext4"
+      [${__SWF_FS_EXT4_64__}]="mkfs.ext4 -O ^64bit"
+      [${__SWF_FS_SWAP__}]="swap"
    )
 
 
@@ -99,9 +99,9 @@ function print_hdd_map( )
 function get_drive_size_kb( )
 {
    local DRIVE=$1
-   local DRIVE_SIZE=$( sudo fdisk -s $DRIVE )
-   # bc <<< "scale=2; $DRIVE_SIZE*1.00"
-   echo $DRIVE_SIZE
+   local DRIVE_SIZE=$( sudo fdisk -s ${DRIVE} )
+   # bc <<< "scale=2; ${DRIVE_SIZE}*1.00"
+   echo ${DRIVE_SIZE}
 }
 
 # Usage:
@@ -109,8 +109,8 @@ function get_drive_size_kb( )
 function get_drive_size_mb( )
 {
    local DRIVE=$1
-   local DRIVE_SIZE=$( get_drive_size_kb $DRIVE )
-   bc <<< "scale=2; $DRIVE_SIZE/($K1024)"
+   local DRIVE_SIZE=$( get_drive_size_kb ${DRIVE} )
+   bc <<< "scale=2; ${DRIVE_SIZE}/(${__SWF_K1024__})"
 }
 
 # Usage:
@@ -118,8 +118,8 @@ function get_drive_size_mb( )
 function get_drive_size_gb( )
 {
    local DRIVE=$1
-   local DRIVE_SIZE=$( get_drive_size_kb $DRIVE )
-   bc <<< "scale=2; $DRIVE_SIZE/($K1024*$K1024)"
+   local DRIVE_SIZE=$( get_drive_size_kb ${DRIVE} )
+   bc <<< "scale=2; ${DRIVE_SIZE}/(${__SWF_K1024__}*${__SWF_K1024__})"
 }
 
 # Usage:
@@ -144,7 +144,7 @@ function get_partition_mount_point( )
 {
    local LOCAL_PARTITION=$1
    local LOCAL_UUID=$( sudo blkid -o export ${LOCAL_PARTITION} | grep '^UUID' | cut -d"=" -f2 )
-   lsblk -o MOUNTPOINT "/dev/disk/by-uuid/$LOCAL_UUID" | awk 'NR==2'
+   lsblk -o MOUNTPOINT "/dev/disk/by-uuid/${LOCAL_UUID}" | awk 'NR==2'
 }
 
 # Usage:
@@ -156,12 +156,12 @@ function get_drive_type( )
 }
 
 # Usage:
-#  format_partition /dev/sda1 ${FS_EXT4} "root"
+#  format_partition /dev/sda1 ${__SWF_FS_EXT4__} "root"
 #  echo $?
 function format_partition( )
 {
    if [ $# -lt 2 ]; then
-      print_error "There must be at least 2 arguments"
+      log_error "There must be at least 2 arguments"
       return 1;
    fi
 
@@ -175,38 +175,38 @@ function format_partition( )
    # Unmount if already mounted
    local MOUNT_POINT=$( get_partition_mount_point ${PARTITION} )
    if [[ -n ${MOUNT_POINT} ]]; then
-      print_warning "Partition \'${PARTITION}\' mounted to \'${MOUNT_POINT}\' => unmount"
+      log_warning "Partition '${PARTITION}' mounted to '${MOUNT_POINT}' => unmount"
       umount ${PARTITION}
    fi
 
-   # ${FS_ACTION_MAP[${FORMAT}]} ${PARTITION} -L ${LABEL}
+   # ${__SWF_FS_ACTION_MAP__[${FORMAT}]} ${PARTITION} -L ${LABEL}
 
-   if [ ${FS_VFAT} == ${FORMAT} ]; then
-      print_info "Formatting to vfat..."
+   if [ ${__SWF_FS_VFAT__} == ${FORMAT} ]; then
+      log_info "Formatting to vfat..."
       mkfs.vfat ${PARTITION} -n ${LABEL}
-   elif [ ${FS_FAT12} == ${FORMAT} ]; then
-      print_info "Formatting to fat12..."
+   elif [ ${__SWF_FS_FAT12__} == ${FORMAT} ]; then
+      log_info "Formatting to fat12..."
       mkfs.vfat -F12 ${PARTITION} -n ${LABEL}
-   elif [ ${FS_FAT16} == ${FORMAT} ]; then
-      print_info "Formatting to fat16..."
+   elif [ ${__SWF_FS_FAT16__} == ${FORMAT} ]; then
+      log_info "Formatting to fat16..."
       mkfs.vfat -F16 ${PARTITION} -n ${LABEL}
-   elif [ ${FS_FAT32} == ${FORMAT} ]; then
-      print_info "Formatting to fat32..."
+   elif [ ${__SWF_FS_FAT32__} == ${FORMAT} ]; then
+      log_info "Formatting to fat32..."
       mkfs.vfat -F32 ${PARTITION} -n ${LABEL}
-   elif [ ${FS_EXT2} == ${FORMAT} ]; then
-      print_info "Formatting to ext2..."
+   elif [ ${__SWF_FS_EXT2__} == ${FORMAT} ]; then
+      log_info "Formatting to ext2..."
       mkfs.ext2 ${PARTITION} -L ${LABEL}
-   elif [ ${FS_EXT3} == ${FORMAT} ]; then
-      print_info "Formatting to ext3..."
+   elif [ ${__SWF_FS_EXT3__} == ${FORMAT} ]; then
+      log_info "Formatting to ext3..."
       mkfs.ext3 ${PARTITION} -L ${LABEL}
-   elif [ ${FS_EXT4} == ${FORMAT} ]; then
-      print_info "Formatting to ext4..."
+   elif [ ${__SWF_FS_EXT4__} == ${FORMAT} ]; then
+      log_info "Formatting to ext4..."
       mkfs.ext4 ${PARTITION} -L ${LABEL}
-   elif [ ${FS_EXT4_64} == ${FORMAT} ]; then
-      print_info "Formatting to ext4 64bit..."
+   elif [ ${__SWF_FS_EXT4_64__} == ${FORMAT} ]; then
+      log_info "Formatting to ext4 64bit..."
       mkfs.ext4 -O ^64bit ${PARTITION} -L ${LABEL}
-   elif [ ${FS_SWAP} == ${FORMAT} ]; then
-      print_info "Formatting to swap..."
+   elif [ ${__SWF_FS_SWAP__} == ${FORMAT} ]; then
+      log_info "Formatting to swap..."
       mkswap ${PARTITION} -L ${LABEL}
    fi
 
@@ -219,7 +219,7 @@ function format_partition( )
 function mount_partition( )
 {
    if [ $# -lt 2 ]; then
-      print_error "There must be at least 2 arguments"
+      log_error "Usage: mount_partition <file> <mount_point>"
       return 1;
    fi
 
@@ -229,7 +229,7 @@ function mount_partition( )
    # Unmount if already mounted
    local PRE_MOUNT_POINT=$( get_partition_mount_point ${PARTITION} )
    if [[ -n ${PRE_MOUNT_POINT} ]]; then
-      print_warning "Partition \'${PARTITION}\' mounted to \'${PRE_MOUNT_POINT}\' => unmount"
+      log_warning "Partition '${PARTITION}' mounted to '${PRE_MOUNT_POINT}' => unmount"
       sudo umount ${PARTITION}
       if [ $? -ne 0 ]; then return $?; fi
    fi
@@ -238,7 +238,7 @@ function mount_partition( )
    if [ ! -d ${MOUNT_POINT} ]; then
       mkdir -p ${MOUNT_POINT}
       if [ $? -ne 0 ]; then
-         print_error "Can't create mount point directory: \'${MOUNT_POINT}\'"
+         log_error "Can't create mount point directory: '${MOUNT_POINT}'"
          return $?;
       fi
    fi
@@ -246,7 +246,7 @@ function mount_partition( )
    # Mount partition
    sudo mount ${PARTITION} ${MOUNT_POINT}
    if [ $? -ne 0 ]; then
-      print_error "Can't mount \'${PARTITION}\' to \'${MOUNT_POINT}\'"
+      log_error "Can't mount '${PARTITION}' to '${MOUNT_POINT}'"
       return $?
    fi
 
@@ -261,7 +261,7 @@ function mount_partition( )
 function umount_partition( )
 {
    if [ $# -lt 1 ]; then
-      print_error "There must be at least 1 arguments"
+      log_error "Usage: umount_partition <file>"
       return 1;
    fi
 
@@ -270,7 +270,7 @@ function umount_partition( )
    if [[ -n ${MOUNT_POINT} ]]; then
       sudo umount ${MOUNT_POINT}
       if [ $? -ne 0 ]; then
-         print_error "Can't umount \'${MOUNT_POINT}\'"
+         log_error "Can't umount '${MOUNT_POINT}'"
       fi
    fi
 
@@ -279,18 +279,23 @@ function umount_partition( )
 
 
 # Usage:
-#  create_partition_image ~/partition.img 1024 ${FS_EXT4} "kernel"
+#  create_partition_image ~/partition.img 1024 ${__SWF_FS_EXT4__} "kernel"
 #  echo $?
 function create_partition_image( )
 {
+   if [ $# -lt 1 ]; then
+      log_error "Usage: create_partition_image <file> <size> <fs> <label>"
+      return 1;
+   fi
+
    local FILE=${1}
    local SIZE=${2}
    local FS=${3}
    local LABEL=${4}
 
-   dd if=/dev/zero of=${FILE} bs=${MB} count=${SIZE}
+   dd if=/dev/zero of=${FILE} bs=${__SWF_MB__} count=${SIZE}
    if [ $? -ne 0 ]; then
-      print_error "Can't create file \'${FILE}\' with size \'${SIZE}\'MB"
+      log_error "Can't create file '${FILE}' with size '${SIZE}'MB"
       return $?
    fi
 

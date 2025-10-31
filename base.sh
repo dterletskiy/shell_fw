@@ -39,7 +39,7 @@ function get_current_script_dir( )
 function dir_names_list( )
 {
    local LOCAL_PATH=${1}
-   local -n RESULT=${2}
+   local -n LOCAL_RESULT=${2}
 
    if [ ! -d "${LOCAL_PATH}" ]; then
       echo "Error: ${LOCAL_PATH} is not a directory."
@@ -49,9 +49,9 @@ function dir_names_list( )
 
    local DIR_LIST=$(find "${LOCAL_PATH}" -mindepth 1 -maxdepth 1 -type d)
 
-   RESULT=( )
+   LOCAL_RESULT=( )
    for DIR in ${DIR_LIST[@]}; do
-      RESULT+=("$(basename ${DIR})")
+      LOCAL_RESULT+=("$(basename ${DIR})")
    done
 
    return 0
@@ -113,9 +113,10 @@ function check_is_number( )
 function check_root( )
 {
    if [ "$(id -u)" != "0" ]; then
-      echo "This script must be run as root" 1>&2
-      exit 1
+      log_error "This script must be run as root" 1>&2
+      return 1
    fi
+   return 0
 }
 
 
