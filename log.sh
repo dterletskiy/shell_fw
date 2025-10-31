@@ -1,10 +1,6 @@
-if [ -n "${__SFW_LOG_SH__}" ]; then
-   return 0
-fi
-__SFW_LOG_SH__=1
+[ -n "${__SFW_LOG_SH__}" ] && return 0 || readonly __SFW_LOG_SH__=1
 
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/constants/console.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/constants/constants.sh"
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/constants/colors.sh"
 
 
 

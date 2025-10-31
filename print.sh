@@ -1,10 +1,6 @@
-if [ -n "${__SFW_PRINT_SH__}" ]; then
-   return 0
-fi
-__SFW_PRINT_SH__=1
+[ -n "${__SFW_PRINT_SH__}" ] && return 0 || readonly __SFW_PRINT_SH__=1
 
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/constants/console.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/constants/constants.sh"
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/log.sh"
 
 
 
@@ -57,15 +53,9 @@ function print_text_in_bunner( )
 function print_time_bar( )
 {
    local LOCAL_TIME=${1}
-   local LOCAL_BAR_WIDTH=${2}
-
-   if [ -z "${LOCAL_BAR_WIDTH}" ]; then
-      LOCAL_BAR_WIDTH=100
-   elif ! [[ "${LOCAL_BAR_WIDTH}" =~ ^[0-9]+$ ]]; then
-      return 1
-   elif [ "${CMD_TIME}" -le 0 ]; then
-      LOCAL_BAR_WIDTH=100
-   fi
+   local LOCAL_BAR_WIDTH=${2:-100}
+ 
+   ! is_positive_integer "${LOCAL_BAR_WIDTH}" && return 1
 
    echo
    echo
@@ -80,11 +70,11 @@ function print_time_bar( )
 
       # Select color
       if [ $percent -lt 50 ]; then
-         COLOR=${ECHO_OK}
+         COLOR=${ECHO_FG_Green}
       elif [ $percent -lt 80 ]; then
-         COLOR=${ECHO_WARNING}
+         COLOR=${ECHO_FG_LightBlue}
       else
-         COLOR=${ECHO_ERROR}
+         COLOR=${ECHO_FG_Red}
       fi
 
       # Move cursor up 2 lines, overwrite both lines
@@ -97,137 +87,36 @@ function print_time_bar( )
    echo
 }
 
-function action_begin( )
-{
-   print_text_in_bunner $@
-   #press_any_key
-}
-function action_end( )
-{
-   echo ""
-   #press_any_key
-}
-
-function print_old( )
-{
-   local LOCAL_FORMAT=$1
-   local LOCAL_MESSAGE=("${!2}")
-   echo -e ${LOCAL_FORMAT}${LOCAL_MESSAGE[@]}${ECHO_RESET}
-}
-
-function print( )
-{
-   declare -A __TRACE_TYPE_TO_COLOR__=(
-      [HEADER]=${ECHO_HEADER}
-      [INFO]=${ECHO_INFO}
-      [OK]=${ECHO_OK}
-      [ERROR]=${ECHO_ERROR}
-      [WARNING]=${ECHO_WARNING}
-      [QUESTION]=${ECHO_QUESTION}
-      [PROMT]=${ECHO_PROMT}
-   )
-
-   declare -A __TRACE_TYPE_TO_IMAGE__=(
-      [HEADER]=📌
-      [HEADER1]=📢
-      [INFO]=ℹ️
-      [INFO1]=💡
-      [OK]=✅
-      [ERROR]=❌
-      [WARNING]=⚠️
-      [QUESTION]=❓
-      [PROMT]=💬
-   )
-
-   declare -A __TRACE_TYPE_TO_TEXT__=(
-      [HEADER]="HEADER"
-      [HEADER1]="HEADER"
-      [INFO]="INFO"
-      [INFO1]="INFO"
-      [OK]="SUCCESS"
-      [ERROR]="ERROR"
-      [WARNING]="WARNING"
-      [QUESTION]="QUESTION"
-      [PROMT]="PROMT"
-   )
-
-
-   local LOCAL_FORMAT=$1
-   local LOCAL_MESSAGE=("${!2}")
-
-   if [[ 0 -ne ${__SWF_PRINT_WITH_TIMESTAMP__} ]]; then
-      printf "[$(date '+%Y-%m-%d %H:%M:%S')]   "
-   fi
-
-   if [[ 0 -ne ${__SWF_PRINT_WITH_IMAGES__} ]]; then
-      local emoji="${__TRACE_TYPE_TO_IMAGE__[$LOCAL_FORMAT]}"
-      printf "%s%-4s" "$emoji" ""
-   fi
-
-   if [[ 0 -ne ${__SWF_PRINT_WITH_FORMAT__} ]]; then
-      printf "%-12s" "[${__TRACE_TYPE_TO_TEXT__[$LOCAL_FORMAT]}]"
-   fi
-
-   local COLOR=""
-   local RESET_COLOR=""
-   if [[ 0 -ne ${__SWF_PRINT_WITH_COLOR__} ]]; then
-      COLOR="${__TRACE_TYPE_TO_COLOR__[$LOCAL_FORMAT]}"
-      RESET_COLOR="${ECHO_RESET}"
-   fi
-
-   if [[ 0 -eq ${__SWF_SPLIT_ARGUMENTS__} ]]; then
-      # No split arguments
-      printf "${COLOR}%s${RESET_COLOR}" ${LOCAL_MESSAGE[@]}
-      printf "\n"
-   else
-      # Split arguments
-      printf "${COLOR}%s${RESET_COLOR}\n" "${LOCAL_MESSAGE[@]}"
-   fi
-}
-
-function print_and_run( )
-{
-   echo ${1}
-   time eval ${1}
-}
-
 
 function print_header( )
 {
-   local LOCAL_MESSAGE=$@
-   print HEADER LOCAL_MESSAGE[@]
+   log_notice "${@}"
 }
 function print_info( )
 {
-   local LOCAL_MESSAGE=$@
-   print INFO LOCAL_MESSAGE[@]
+   log_debug "${@}"
 }
 function print_ok( )
 {
-   local LOCAL_MESSAGE=$@
-   print OK LOCAL_MESSAGE[@]
+   log_info "${@}"
 }
 function print_error( )
 {
-   local LOCAL_MESSAGE=$@
-   print ERROR LOCAL_MESSAGE[@]
+   log_error "${@}"
 }
 function print_warning( )
 {
-   local LOCAL_MESSAGE=$@
-   print WARNING LOCAL_MESSAGE[@]
+   log_warning "${@}"
 }
 
 function print_question( )
 {
-   local LOCAL_MESSAGE=$@
-   print QUESTION LOCAL_MESSAGE[@]
+   log_trace "${@}"
 }
 
 function print_promt( )
 {
-   local LOCAL_MESSAGE=$@
-   print PROMT LOCAL_MESSAGE[@]
+   log_trace "${@}"
 }
 
 # This function prints variable name (passed as the parameter) and its value

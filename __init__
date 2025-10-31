@@ -1,11 +1,13 @@
-if [ -n "${__SFW__INIT__}" ]; then
-   return 0
-fi
-__SFW__INIT__=1
+[ -n "${__SFW__INIT__}" ] && return 0 || readonly __SFW__INIT__=1
 
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/arg_pars.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/base.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/print.sh"
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/log.sh"
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/print.sh"
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/arg_pars.sh"
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/range.sh"
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/array.sh"
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/file.sh"
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/ui.sh"
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/numeric.sh"
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/cpu.sh"
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/drive.sh"
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/device_tree.sh"

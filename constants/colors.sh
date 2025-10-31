@@ -1,7 +1,4 @@
-if [ -n "${__SFW_CONSTANTS_CONSOLE_SH__}" ]; then
-   return 0
-fi
-__SFW_CONSTANTS_CONSOLE_SH__=1
+[ -n "${__SFW_CONSTANTS_COLORS_SH__}" ] && return 0 || readonly __SFW_CONSTANTS_COLORS_SH__=1
 
 
 
@@ -64,13 +61,3 @@ readonly ECHO_BG_White=$ECHO_PREFIX"107m"
 
 
 readonly ECHO_RESET=${ECHO_BG_Default}${ECHO_FG_Default}${ECHO_FORMAT_Reset}
-
-readonly ECHO_QUESTION=${ECHO_FG_Magenta}
-readonly ECHO_PROMT=${ECHO_FG_Magenta}
-readonly ECHO_USER_INTERACTION=${ECHO_FG_Magenta}
-
-readonly ECHO_HEADER=${ECHO_FG_LightBlue}
-readonly ECHO_INFO=${ECHO_FG_LightYellow}
-readonly ECHO_OK=${ECHO_FG_Green}
-readonly ECHO_ERROR=${ECHO_FG_Red}
-readonly ECHO_WARNING=${ECHO_FG_LightBlue}

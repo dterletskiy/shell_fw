@@ -1,9 +1,6 @@
-if [ -n "${__SFW_ARG_PARS_SH__}" ]; then
-   return 0
-fi
-__SFW_ARG_PARS_SH__=1
+[ -n "${__SFW_ARG_PARS_SH__}" ] && return 0 || readonly __SFW_ARG_PARS_SH__=1
 
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/base.sh"
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/log.sh"
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/print.sh"
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/ui.sh"
 

@@ -1,7 +1,4 @@
-if [ -n "${__SFW_DEVICE_TREE_SH__}" ]; then
-   return 0
-fi
-__SFW_DEVICE_TREE_SH__=1
+[ -n "${__SFW_DEVICE_TREE_SH__}" ] && return 0 || readonly __SFW_DEVICE_TREE_SH__=1
 
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/print.sh"
 
