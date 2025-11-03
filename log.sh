@@ -9,6 +9,7 @@ readonly __SWF_LOG_WITH_COLOR__=1
 readonly __SWF_LOG_WITH_IMAGES__=1
 readonly __SWF_LOG_WITH_FORMAT__=1
 readonly __SWF_LOG_WITH_TIMESTAMP__=1
+readonly __SWF_LOG_WITH_CODEPOINT__=1
 
 
 
@@ -52,7 +53,11 @@ function __log__( )
    local LOCAL_MESSAGE=("${!2}")
 
    if [[ 0 -ne ${__SWF_LOG_WITH_TIMESTAMP__} ]]; then
-      printf "[$(date '+%Y-%m-%d %H:%M:%S')]   "
+      (( __SWF_LOG_WITH_COLOR__ )) && \
+         COLOR="${ECHO_FG_LightCyan}" || COLOR=""
+      (( __SWF_LOG_WITH_COLOR__ )) && \
+         RESET_COLOR="${ECHO_RESET}" || RESET_COLOR=""
+      printf "${COLOR}%-25s${RESET_COLOR}" "[$(date '+%Y-%m-%d %H:%M:%S')]"
    fi
 
    if [[ 0 -ne ${__SWF_LOG_WITH_IMAGES__} ]]; then
@@ -61,15 +66,30 @@ function __log__( )
    fi
 
    if [[ 0 -ne ${__SWF_LOG_WITH_FORMAT__} ]]; then
-      printf "%-12s" "[${__TRACE_TYPE_TO_TEXT__[$LOCAL_FORMAT]}]"
+      (( __SWF_LOG_WITH_COLOR__ )) && \
+         COLOR="${__TRACE_TYPE_TO_COLOR__[$LOCAL_FORMAT]}" || COLOR=""
+      (( __SWF_LOG_WITH_COLOR__ )) && \
+         RESET_COLOR="${ECHO_RESET}" || RESET_COLOR=""
+      printf "${COLOR}%-12s${RESET_COLOR}" "[${__TRACE_TYPE_TO_TEXT__[$LOCAL_FORMAT]}]"
    fi
 
-   local COLOR=""
-   local RESET_COLOR=""
-   if [[ 0 -ne ${__SWF_LOG_WITH_COLOR__} ]]; then
-      COLOR="${__TRACE_TYPE_TO_COLOR__[$LOCAL_FORMAT]}"
-      RESET_COLOR="${ECHO_RESET}"
+   if [[ 0 -ne ${__SWF_LOG_WITH_CODEPOINT__} ]]; then
+      local func="${FUNCNAME[2]}"
+      local src="${BASH_SOURCE[2]}"
+      local line="${BASH_LINENO[$(( 2 - 1 ))]}"
+
+      (( __SWF_LOG_WITH_COLOR__ )) && \
+         COLOR="${ECHO_FG_LightYellow}" || COLOR=""
+      (( __SWF_LOG_WITH_COLOR__ )) && \
+         RESET_COLOR="${ECHO_RESET}" || RESET_COLOR=""
+
+      printf "${COLOR}%-25s${RESET_COLOR}" "[${func}():${line}]"
    fi
+
+   (( __SWF_LOG_WITH_COLOR__ )) && \
+      COLOR="${__TRACE_TYPE_TO_COLOR__[$LOCAL_FORMAT]}" || COLOR=""
+   (( __SWF_LOG_WITH_COLOR__ )) && \
+      RESET_COLOR="${ECHO_RESET}" || RESET_COLOR=""
 
    if [[ 0 -eq ${__SWF_SPLIT_ARGUMENTS__} ]]; then
       # No split arguments
