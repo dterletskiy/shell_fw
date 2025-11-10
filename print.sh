@@ -192,3 +192,17 @@ function print_map( )
    done
    echo "}"
 }
+
+function print_backtrace( )
+{
+   echo "---- Backtrace ----" >&2
+   local i
+   for (( i = 0; i < ${#FUNCNAME[@]}; i++ ))
+   do
+      local func="${FUNCNAME[$i]}"
+      local src="${BASH_SOURCE[$i]}"
+      local line="${BASH_LINENO[$(( i - 1 ))]}"
+      printf '#%d  %s() at %s:%s\n' "$i" "$func" "$src" "$line" >&2
+   done
+   echo "-------------------" >&2
+}

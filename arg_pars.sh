@@ -257,7 +257,7 @@ function __test_defined_parameter__( )
 #    - CMD_XXXXX_NAME="xxxxx"
 #    - CMD_XXXXX_TYPE="ARGUMENT"
 #    - CMD_XXXXX_REQUIRED="REQUIRED"
-#    - CMD_XXXXX_ALLOVED_VALUES=( "allowed_value_1" ... "allowed_value_n" )
+#    - CMD_XXXXX_ALLOWED_VALUES=( "allowed_value_1" ... "allowed_value_n" )
 #    - CMD_XXXXX_DEFAULT_VALUES=( "default_value_1" ... "default_value_n" )
 #    - CMD_XXXXX_DEFINED_VALUES=( )
 function __define_argument__( )
