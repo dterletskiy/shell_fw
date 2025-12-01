@@ -25,6 +25,20 @@ function is_integer( )
    [[ "$value" =~ ^-?[0-9]+$ ]]
 }
 
+function is_non_positive_integer( )
+{
+   local value="$1"
+
+   is_integer "${value}" && ! is_positive_integer "${value}"
+}
+
+function is_non_negative_integer( )
+{
+   local value="$1"
+
+   is_integer "${value}" && ! is_negative_integer "${value}"
+}
+
 function is_positive_float( )
 {
    local value="$1"
@@ -50,6 +64,20 @@ function is_float( )
    local value="$1"
 
    [[ "$value" =~ ^-?[0-9]+\.[0-9]+$ ]]
+}
+
+function is_non_positive_float( )
+{
+   local value="$1"
+
+   is_float "${value}" && ! is_positive_float "${value}"
+}
+
+function is_non_negative_float( )
+{
+   local value="$1"
+
+   is_float "${value}" && ! is_negative_float "${value}"
 }
 
 function is_positive_number( )
@@ -83,6 +111,20 @@ function is_number( )
    else
       return 1
    fi
+}
+
+function is_non_positive_number( )
+{
+   local value="$1"
+
+   is_number "${value}" && ! is_positive_number "${value}"
+}
+
+function is_non_negative_number( )
+{
+   local value="$1"
+
+   is_number "${value}" && ! is_negative_number "${value}"
 }
 
 
