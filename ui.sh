@@ -61,3 +61,20 @@ function execute( )
 
    return ${EXECUTE_STATUS}
 }
+
+function execute_arr( )
+{
+   declare -n __EXECUTE_ARR_COMMAND__=${1}
+   # printf "%q " "${__EXECUTE_ARR_COMMAND__[@]}"
+   print_info "${__EXECUTE_ARR_COMMAND__[@]}"
+   "${__EXECUTE_ARR_COMMAND__[@]}"
+   local EXECUTE_STATUS=$?
+
+   if [ ${EXECUTE_STATUS} -eq 0 ]; then
+      print_ok "EXECUTE FINISH (${EXECUTE_STATUS}): '${__EXECUTE_ARR_COMMAND__[@]}'"
+   else
+      print_error "EXECUTE FINISH (${EXECUTE_STATUS}): '${__EXECUTE_ARR_COMMAND__[@]}'"
+   fi
+
+   return ${EXECUTE_STATUS}
+}
