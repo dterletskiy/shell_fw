@@ -74,9 +74,10 @@ function __log__( )
    fi
 
    if [[ 0 -ne ${__SWF_LOG_WITH_CODEPOINT__} ]]; then
-      local func="${FUNCNAME[2]}"
-      local src="${BASH_SOURCE[2]}"
-      local line="${BASH_LINENO[$(( 2 - 1 ))]}"
+      local STACK_INDEX=2
+      local func="${FUNCNAME[${STACK_INDEX}]}"
+      local src="${BASH_SOURCE[${STACK_INDEX}]}"
+      local line="${BASH_LINENO[$(( ${STACK_INDEX} - 1 ))]}"
 
       (( __SWF_LOG_WITH_COLOR__ )) && \
          COLOR="${ECHO_FG_LightYellow}" || COLOR=""
