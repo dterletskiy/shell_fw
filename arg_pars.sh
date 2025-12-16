@@ -472,7 +472,8 @@ function get_parameter_value( )
 
 
 
-# 'filter_args' filters a list of command-line arguments and returns only
+# Description:
+# 'filer_parameters' filters a list of command-line arguments and returns only
 # those arguments and options whose keys are explicitly allowed.
 # The function supports arguments in the following forms:
 #     --option — a standalone flag
@@ -496,33 +497,86 @@ function get_parameter_value( )
 # - Order of arguments is preserved
 function filer_parameters( )
 {
-   local -n INPUT=${1}
-   local -n FILTER=${2}
-   local -n OUTPUT=${3}
+   local -n _FP_INPUT_=${1}
+   local -n _FP_FILTER_=${2}
+   local -n _FP_OUTPUT_=${3}
 
-   OUTPUT=( )
+   _FP_OUTPUT_=( )
 
-   for arg in "${INPUT[@]}"; do
+   for arg in "${_FP_INPUT_[@]}"; do
       local key="${arg%%=*}"
 
-      for allowed in "${FILTER[@]}"; do
+      for allowed in "${_FP_FILTER_[@]}"; do
          if [[ "$key" == "${allowed}" ]]; then
-            OUTPUT+=( "$arg" )
+            _FP_OUTPUT_+=( "$arg" )
             break
          fi
       done
    done
 
-   # log_info "INPUT:  ${INPUT[@]}"
-   # log_info "FILTER: ${FILTER[@]}"
-   # log_info "OUTPUT: ${OUTPUT[@]}"
+   log_info "INPUT:  ${_FP_INPUT_[@]}"
+   log_info "FILTER: ${_FP_FILTER_[@]}"
+   log_info "OUTPUT: ${_FP_OUTPUT_[@]}"
 }
 
 
 
-# Description
+# Description:
+# 'map_parameters' transforms a list of command-line arguments using 
+# a mapping dictionary.
+# The function accepts a list of arguments in the form:
+#     --option — a standalone flag
+#     --arg=value — an option with an inline value
+# 
+# Each matched argument key is replaced with the corresponding value 
+# from the dictionary, while the argument value (if present) is preserved.
+# 
+# Function Signature:
+# map_parameters <source_array> <mapping_dictionary> <output_array>
+# 
+# Parameters:
+# source_array - Name of the array containing the original command-line arguments.
+# mapping_dictionary - Name of an associative array where:
+#     - the key is an argument name (e.g. --width)
+#     - the value is the string that should replace it in the output (e.g. -w)
+# output_array - Name of the array that will receive the filtered and transformed arguments.
+# 
+# All parameters are passed by reference using Bash namerefs (local -n).
+function map_parameters( )
+{
+   local -n _MP_INPUT_=${1}
+   local -n _MP_MAP_=${2}
+   local -n _MP_OUTPUT_=${3}
 
-# map_args filters and transforms a list of command-line arguments using 
+   _MP_OUTPUT_=( )
+
+   for arg in "${_MP_INPUT_[@]}"; do
+      local key="${arg%%=*}"
+      local value=""
+
+      if [[ "$arg" == *"="* ]]; then
+         value="=${arg#*=}"
+      fi
+
+      if [[ -n "${_MP_MAP_[$key]+_}" ]]; then
+         _MP_OUTPUT_+=( "${_MP_MAP_[$key]}${value}" )
+      else
+         _MP_OUTPUT_+=( "${arg}" )
+      fi
+   done
+
+   log_info "INPUT:  ${_MP_INPUT_[@]}"
+   log_info "MAP:"
+   for key in "${!_MP_MAP_[@]}"; do
+      log_info "   ${key} = ${_MP_MAP_[$key]}"
+   done
+   log_info "OUTPUT: ${_MP_OUTPUT_[@]}"
+}
+
+
+
+# Description:
+# 'filter_map_parameters' filters and transforms a list of command-line arguments using 
 # a mapping dictionary.
 # The function accepts a list of arguments in the form:
 #     --option — a standalone flag
@@ -544,33 +598,49 @@ function filer_parameters( )
 # output_array - Name of the array that will receive the filtered and transformed arguments.
 # 
 # All parameters are passed by reference using Bash namerefs (local -n).
-function map_parameters( )
+function filter_map_parameters( )
 {
-   local -n INPUT=${1}
-   local -n MAP=${2}
-   local -n OUTPUT=${3}
+   local -n _FMP_INPUT_=${1}
+   local -n _FMP_MAP_=${2}
+   local -n _FMP_OUTPUT_=${3}
 
-   OUTPUT=( )
+   _FMP_OUTPUT_=( )
+   _FMP_OUTPUT_TMP_=( )
+   filter=( "${!_FMP_MAP_[@]}" )
+   filer_parameters _FMP_INPUT_ filter _FMP_OUTPUT_TMP_
+   map_parameters _FMP_OUTPUT_TMP_ _FMP_MAP_ _FMP_OUTPUT_
+}
 
-   for arg in "${INPUT[@]}"; do
-      local key="${arg%%=*}"
-      local value=""
 
-      if [[ "$arg" == *"="* ]]; then
-         value="=${arg#*=}"
-      fi
 
-      if [[ -n "${MAP[$key]+_}" ]]; then
-         OUTPUT+=( "${MAP[$key]}${value}" )
-      fi
-   done
+function __test_parameters_transform__( )
+{
+   parameters=(
+         "--width=100"
+         "--height=200"
+         "--debug"
+         "--debug=5"
+         "--test"
+         "--id=10"
+      )
 
-   # log_info "INPUT:  ${INPUT[@]}"
-   # log_info "MAP:"
-   # for key in "${!MAP[@]}"; do
-   #    log_info "   ${key} = ${MAP[$key]}"
-   # done
-   # log_info "OUTPUT: ${OUTPUT[@]}"
+   filter=(
+         "--width"
+         "--height"
+         "--debug"
+      )
+
+   declare -A map=(
+         [--debug]="--verbose"
+      )
+
+   output=( )
+   log_warning "filter"
+   filer_parameters parameters filter output
+   log_warning "map"
+   map_parameters parameters map output
+   log_warning "filter and map"
+   filter_map_parameters parameters map output
 }
 
 
