@@ -471,6 +471,111 @@ function get_parameter_value( )
 
 
 
+
+# 'filter_args' filters a list of command-line arguments and returns only
+# those arguments and options whose keys are explicitly allowed.
+# The function supports arguments in the following forms:
+#     --option — a standalone flag
+#     --arg=value — an option with an inline value
+# Only the argument name (the part before =) is evaluated.
+# The value, if present, is preserved unchanged.
+# 
+# Behavior:
+# - Iterates over all arguments in source_array
+# - Extracts the argument key:
+#     --arg=value → --arg
+#     --option → --option
+# - Compares the extracted key against allowed_keys_array
+# - If a match is found, the original argument is added to output_array
+# - Argument values are not modified or validated
+# 
+# Notes:
+# - Requires Bash 4.3+ due to use of local -n
+# - Does not support space-separated values (--arg value)
+# - Comparison is strict (exact string match)
+# - Order of arguments is preserved
+function filer_parameters( )
+{
+   local -n INPUT=${1}
+   local -n FILTER=${2}
+   local -n OUTPUT=${3}
+
+   OUTPUT=( )
+
+   for arg in "${INPUT[@]}"; do
+      local key="${arg%%=*}"
+
+      for allowed in "${FILTER[@]}"; do
+         if [[ "$key" == "${allowed}" ]]; then
+            OUTPUT+=( "$arg" )
+            break
+         fi
+      done
+   done
+
+   # log_info "INPUT:  ${INPUT[@]}"
+   # log_info "FILTER: ${FILTER[@]}"
+   # log_info "OUTPUT: ${OUTPUT[@]}"
+}
+
+
+
+# Description
+
+# map_args filters and transforms a list of command-line arguments using 
+# a mapping dictionary.
+# The function accepts a list of arguments in the form:
+#     --option — a standalone flag
+#     --arg=value — an option with an inline value
+# 
+# Only arguments whose keys exist in the provided mapping dictionary 
+# are included in the output.
+# Each matched argument key is replaced with the corresponding value 
+# from the dictionary, while the argument value (if present) is preserved.
+# 
+# Function Signature:
+# map_args <source_array> <mapping_dictionary> <output_array>
+# 
+# Parameters:
+# source_array - Name of the array containing the original command-line arguments.
+# mapping_dictionary - Name of an associative array where:
+#     - the key is an allowed argument name (e.g. --width)
+#     - the value is the string that should replace it in the output (e.g. -w)
+# output_array - Name of the array that will receive the filtered and transformed arguments.
+# 
+# All parameters are passed by reference using Bash namerefs (local -n).
+function map_parameters( )
+{
+   local -n INPUT=${1}
+   local -n MAP=${2}
+   local -n OUTPUT=${3}
+
+   OUTPUT=( )
+
+   for arg in "${INPUT[@]}"; do
+      local key="${arg%%=*}"
+      local value=""
+
+      if [[ "$arg" == *"="* ]]; then
+         value="=${arg#*=}"
+      fi
+
+      if [[ -n "${MAP[$key]+_}" ]]; then
+         OUTPUT+=( "${MAP[$key]}${value}" )
+      fi
+   done
+
+   # log_info "INPUT:  ${INPUT[@]}"
+   # log_info "MAP:"
+   # for key in "${!MAP[@]}"; do
+   #    log_info "   ${key} = ${MAP[$key]}"
+   # done
+   # log_info "OUTPUT: ${OUTPUT[@]}"
+}
+
+
+
+
 # Usage example:
 #
 # ----------------------------------------------------------------------
