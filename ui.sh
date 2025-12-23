@@ -49,14 +49,14 @@ function enter_choice( )
 function execute( )
 {
    local COMMAND="${@}"
-   print_info "EXECUTE START: '${COMMAND}'"
+   log_debug "EXECUTE START: '${COMMAND}'"
    eval "${COMMAND}"
    local EXECUTE_STATUS=$?
 
    if [ ${EXECUTE_STATUS} -eq 0 ]; then
-      print_ok "EXECUTE FINISH (${EXECUTE_STATUS}): '${COMMAND}'"
+      log_info "EXECUTE FINISH (${EXECUTE_STATUS}): '${COMMAND}'"
    else
-      print_error "EXECUTE FINISH (${EXECUTE_STATUS}): '${COMMAND}'"
+      log_error "EXECUTE FINISH (${EXECUTE_STATUS}): '${COMMAND}'"
    fi
 
    return ${EXECUTE_STATUS}
@@ -66,14 +66,14 @@ function execute_arr( )
 {
    declare -n __EXECUTE_ARR_COMMAND__=${1}
    # printf "%q " "${__EXECUTE_ARR_COMMAND__[@]}"
-   print_info "${__EXECUTE_ARR_COMMAND__[@]}"
+   log_debug "${__EXECUTE_ARR_COMMAND__[@]}"
    "${__EXECUTE_ARR_COMMAND__[@]}"
    local EXECUTE_STATUS=$?
 
    if [ ${EXECUTE_STATUS} -eq 0 ]; then
-      print_ok "EXECUTE FINISH (${EXECUTE_STATUS}): '${__EXECUTE_ARR_COMMAND__[@]}'"
+      log_info "EXECUTE FINISH (${EXECUTE_STATUS}): '${__EXECUTE_ARR_COMMAND__[@]}'"
    else
-      print_error "EXECUTE FINISH (${EXECUTE_STATUS}): '${__EXECUTE_ARR_COMMAND__[@]}'"
+      log_error "EXECUTE FINISH (${EXECUTE_STATUS}): '${__EXECUTE_ARR_COMMAND__[@]}'"
    fi
 
    return ${EXECUTE_STATUS}
