@@ -28,7 +28,20 @@ function get_current_script_name( )
 # 'get_current_script_dir' - returns directory where called script file is placed
 function get_current_script_dir( )
 {
-   echo $( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+   # echo $( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+   local source="${BASH_SOURCE[-1]}"
+
+   while [ -h "$source" ]
+   do
+      local dir="$( cd -P "$( dirname "$source" )" >/dev/null 2>&1 && pwd )"
+      source="$( readlink "$source" )"
+
+      [[ "$source" != /* ]] && source="$dir/$source"
+   done
+
+   local dir="$( cd -P "$( dirname "$source" )" >/dev/null 2>&1 && pwd )"
+   echo "$dir"
 }
 
 # This function recurcively searches all files in given directory with given
