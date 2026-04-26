@@ -78,3 +78,42 @@ function execute_arr( )
 
    return ${EXECUTE_STATUS}
 }
+
+
+
+##
+# @brief Check if a required utility is available in PATH.
+#
+# This function verifies that the specified command-line utility exists
+# and is accessible via the current PATH environment variable.
+#
+# @param[in]  $1   Name of the utility to check (e.g. "jq", "cp").
+#
+# @return 0    Utility is found and executable.
+# @return 127  Utility is not found in PATH.
+#
+# @details
+# Uses `command -v` to test for availability in a POSIX-compliant way.
+# If the utility is missing, an error message is printed to stderr.
+#
+# @note
+# This function does not terminate the script. Caller should handle
+# the return code explicitly if required.
+#
+# @warning
+# Argument must be a valid command name. No validation is performed
+# for empty or malformed input.
+#
+# @code
+# test_required_util "jq" || exit $?
+# @endcode
+#
+function test_required_util( )
+{
+   local UTIL=${1}
+
+   if ! command -v ${UTIL} > /dev/null 2>&1; then
+      log_error "Error: '${UTIL}' is required but not installed" >&2
+      return 127
+   fi
+}
