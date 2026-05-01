@@ -514,9 +514,9 @@ function filer_parameters( )
       done
    done
 
-   log_info "INPUT:  ${_FP_INPUT_[@]}"
-   log_info "FILTER: ${_FP_FILTER_[@]}"
-   log_info "OUTPUT: ${_FP_OUTPUT_[@]}"
+   # log_info "INPUT:  ${_FP_INPUT_[@]}"
+   # log_info "FILTER: ${_FP_FILTER_[@]}"
+   # log_info "OUTPUT: ${_FP_OUTPUT_[@]}"
 }
 
 
@@ -565,12 +565,12 @@ function map_parameters( )
       fi
    done
 
-   log_info "INPUT:  ${_MP_INPUT_[@]}"
-   log_info "MAP:"
-   for key in "${!_MP_MAP_[@]}"; do
-      log_info "   ${key} = ${_MP_MAP_[$key]}"
-   done
-   log_info "OUTPUT: ${_MP_OUTPUT_[@]}"
+   # log_info "INPUT:  ${_MP_INPUT_[@]}"
+   # log_info "MAP:"
+   # for key in "${!_MP_MAP_[@]}"; do
+   #    log_info "   ${key} = ${_MP_MAP_[$key]}"
+   # done
+   # log_info "OUTPUT: ${_MP_OUTPUT_[@]}"
 }
 
 
