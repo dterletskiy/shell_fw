@@ -16,7 +16,199 @@ readonly __SFW_PARAMETER_TYPE_OPTION__="OPTION"
 readonly __SFW_OPTION_DEFINED__="DEFINED"
 readonly __SFW_OPTION_NOT_DEFINED__="UNDEFINED"
 
+# Array of registered parameters
 declare -a CMD_PARAMETERS=( )
+# Map of registered parameters and variables for them
+declare -Ag CMD_PARAMETERS_REGISTRY=( )
+
+
+
+# get_registered_parameters()
+#
+# Retrieves all registered parameter names from a registry map.
+#
+# The registry map stores parameter names as keys and references
+# (names) of internal variable groups as values.
+#
+# Parameters:
+#   $1 - Name of the associative array (registry map)
+#   $2 - Output array (by nameref) that will contain all keys
+#
+# Behavior:
+#   - Clears the output array
+#   - Iterates over all keys in the registry map
+#   - Stores each key into the output array
+#
+# Return values:
+#   0 - Always succeeds
+#
+# Complexity:
+#   - Time complexity: O(n)
+#   - Space complexity: O(n)
+#
+# Notes:
+#   - Requires Bash 4.3+ (nameref support via local -n)
+#   - Order of returned keys is not guaranteed (associative array)
+function get_registered_parameters( )
+{
+   local -n map=$1
+   local -n out=$2
+
+   local key
+
+   out=()
+
+   for key in "${!map[@]}"; do
+      out+=( "${key}" )
+   done
+}
+
+
+
+# is_parameter_registered()
+#
+# Checks whether a parameter is registered in the registry map.
+#
+# Parameters:
+#   $1 - Name of the associative array (registry map)
+#   $2 - Parameter name (key)
+#
+# Return values:
+#   0 - Parameter is registered
+#   1 - Parameter is not registered
+#
+# Notes:
+#   - Uses [[ -v ]] to safely check key existence
+#   - Does not validate content, only presence of key
+function is_parameter_registered( )
+{
+   local -n map=$1
+   local key=$2
+
+   [[ -v map["$key"] ]]
+}
+
+
+
+# get_variables_for_parameter_registered()
+#
+# Retrieves all variable names associated with a registered parameter.
+#
+# Each parameter in the registry map points to a named array that
+# contains a list of variable names belonging to that parameter.
+#
+# Parameters:
+#   $1 - Name of the associative array (registry map)
+#   $2 - Parameter name (key)
+#   $3 - Output array (by nameref) that will contain variable names
+#
+# Behavior:
+#   - Clears output array
+#   - Resolves registry entry to array name
+#   - Dereferences the array via nameref
+#   - Copies variable names into output array
+#
+# Return values:
+#   0 - Success
+#   1 - Parameter is not registered
+#
+# Notes:
+#   - Requires Bash 4.3+
+#   - Uses indirect reference via declare -n
+function get_variables_for_parameter_registered( )
+{
+   local -n map=$1
+   local key=$2
+   local -n out=$3
+
+   local arr_name
+
+   out=()
+
+   [[ -v map["$key"] ]] || return 1
+
+   arr_name="${map[$key]}"
+
+   declare -n ref="$arr_name"
+
+   out=( "${ref[@]}" )
+}
+
+
+
+# print_parameter_info()
+#
+# Prints detailed information about a single registered parameter.
+#
+# For a given parameter name:
+#   - Retrieves associated variable list
+#   - Dereferences each variable name to its value
+#   - Prints variable name and value using logging functions
+#
+# Parameters:
+#   $1 - Parameter name
+#
+# Behavior:
+#   - Prints parameter header in green
+#   - Lists all associated variables in yellow
+#   - Prints variable values in cyan
+#
+# Dependencies:
+#   - CMD_PARAMETERS_REGISTRY (global registry map)
+#   - get_variables_for_parameter_registered()
+#   - log_green(), log_yellow(), log_cyan(), log_info()
+#
+# Notes:
+#   - Uses indirect expansion for final value resolution (${!var})
+#   - Intended for debugging / diagnostics output
+function print_parameter_info( )
+{
+   local NAME=${1}
+
+   log_green "${NAME}"
+
+   # is_parameter_registered CMD_PARAMETERS_REGISTRY ${NAME} \
+   #    && log_info "'${NAME}' registered" \
+   #    || log_warning "'${NAME}' not registered"
+
+   declare -a VARIABLES
+   get_variables_for_parameter_registered \
+      CMD_PARAMETERS_REGISTRY ${NAME} VARIABLES
+
+   for variable in "${VARIABLES[@]}"; do
+      declare -n __variable__=${variable}
+      log_yellow "   ${variable}:"
+      log_cyan "      ${__variable__[*]}"
+   done
+}
+
+
+
+# print_parameters_info()
+#
+# Iterates over all registered parameters and prints their details.
+#
+# Behavior:
+#   - Retrieves all registered parameter names
+#   - Calls print_parameter_info() for each parameter
+#
+# Dependencies:
+#   - CMD_PARAMETERS_REGISTRY
+#   - get_registered_parameters()
+#   - print_parameter_info()
+#
+# Notes:
+#   - This is a diagnostic / introspection function
+#   - Order of output depends on associative array iteration order
+function print_parameters_info( )
+{
+   local -a REGISTERED_PARAMETERS=( )
+   get_registered_parameters CMD_PARAMETERS_REGISTRY REGISTERED_PARAMETERS
+
+   for parameter in "${REGISTERED_PARAMETERS[@]}"; do
+      print_parameter_info ${parameter}
+   done
+}
 
 
 
@@ -26,8 +218,12 @@ function __split_string_add_to_array__( )
    local LOCAL_DELIMITER=${2}
    declare -n LOCAL_ARRAY=${3}
 
+   local IFS_BACKUP=${IFS}
+
    IFS="${LOCAL_DELIMITER}" read -r -a __ARRAY__ <<< "${LOCAL_STRING}"
    LOCAL_ARRAY+=("${__ARRAY__[@]}")
+
+   IFS=${IFS_BACKUP}
 }
 
 function __print_parameters_info__( )
@@ -36,7 +232,7 @@ function __print_parameters_info__( )
    log_cyan "Application parameters information:"
 
    local IFS_BACKUP=${IFS}
-   IFS=","
+   # IFS=","
 
    for _PARAMETER_ in "${CMD_PARAMETERS[@]}"; do
       local PARAMETER=${_PARAMETER_^^}
@@ -68,9 +264,9 @@ function __print_parameters_info__( )
          log_lightcyan "      variables:"
          log_lightgray "         ${_NAME_}:              ${!_NAME_}"
          log_lightgray "         ${_TYPE_}:              ${!_TYPE_}"
-         log_lightgray "         ${!__ALLOWED_ARRAY__}:  ${__ALLOWED_ARRAY__[*]}"
-         log_lightgray "         ${!__DEFAULT_ARRAY__}:  ${__DEFAULT_ARRAY__[*]}"
-         log_lightgray "         ${!__DEFINED_ARRAY__}:  ${__DEFINED_ARRAY__[*]}"
+         log_lightgray "         ${!__ALLOWED_ARRAY__}:    ${__ALLOWED_ARRAY__[*]}"
+         log_lightgray "         ${!__DEFAULT_ARRAY__}:    ${__DEFAULT_ARRAY__[*]}"
+         log_lightgray "         ${!__DEFINED_ARRAY__}:    ${__DEFINED_ARRAY__[*]}"
       elif [ ${!_TYPE_} == ${__SFW_PARAMETER_TYPE_OPTION__} ]; then
          local _DEFINED_="CMD_${PARAMETER}_DEFINED"
 
@@ -283,12 +479,26 @@ function __define_argument__( )
 
    local LOCAL_NAME_UP="${LOCAL_NAME^^}"
 
-   declare -g "CMD_${LOCAL_NAME_UP}_NAME=${LOCAL_NAME}"
-   declare -g "CMD_${LOCAL_NAME_UP}_TYPE=${__SFW_PARAMETER_TYPE_ARGUMENT__}"
-   declare -g "CMD_${LOCAL_NAME_UP}_REQUIRED=${LOCAL_REQUIRED}"
-   declare -ag "CMD_${LOCAL_NAME_UP}_ALLOWED_VALUES=(\"\${LOCAL_PARAMETER_VALUES_ALLOWED[@]}\")"
-   declare -ag "CMD_${LOCAL_NAME_UP}_DEFAULT_VALUES=(\"\${LOCAL_PARAMETER_VALUES_DEFAULT[@]}\")"
+   # Here we define required variables for current argument
+   declare -gr "CMD_${LOCAL_NAME_UP}_NAME=${LOCAL_NAME}"
+   declare -gr "CMD_${LOCAL_NAME_UP}_TYPE=${__SFW_PARAMETER_TYPE_ARGUMENT__}"
+   declare -gr "CMD_${LOCAL_NAME_UP}_REQUIRED=${LOCAL_REQUIRED}"
+   declare -agr "CMD_${LOCAL_NAME_UP}_ALLOWED_VALUES=(\"\${LOCAL_PARAMETER_VALUES_ALLOWED[@]}\")"
+   declare -agr "CMD_${LOCAL_NAME_UP}_DEFAULT_VALUES=(\"\${LOCAL_PARAMETER_VALUES_DEFAULT[@]}\")"
    declare -ag "CMD_${LOCAL_NAME_UP}_DEFINED_VALUES=( )"
+
+   # Here we define and register new named array
+   # with defined variables names for just defined option
+   declare -n arr="CMD_AVAILABLE_PARAMETERS_${LOCAL_NAME_UP}"
+   arr=(
+         "CMD_${LOCAL_NAME_UP}_NAME"
+         "CMD_${LOCAL_NAME_UP}_TYPE"
+         "CMD_${LOCAL_NAME_UP}_REQUIRED"
+         "CMD_${LOCAL_NAME_UP}_ALLOWED_VALUES"
+         "CMD_${LOCAL_NAME_UP}_DEFAULT_VALUES"
+         "CMD_${LOCAL_NAME_UP}_DEFINED_VALUES"
+      )
+   CMD_PARAMETERS_REGISTRY[${LOCAL_NAME}]="CMD_AVAILABLE_PARAMETERS_${LOCAL_NAME_UP}"
 }
 
 # Calling this function like this:
@@ -304,9 +514,21 @@ function __define_option__( )
 
    local LOCAL_NAME_UP="${LOCAL_NAME^^}"
 
-   eval "readonly CMD_${LOCAL_NAME_UP}_NAME=\"${LOCAL_NAME}\""
-   eval "readonly CMD_${LOCAL_NAME_UP}_TYPE=${__SFW_PARAMETER_TYPE_OPTION__}"
-   eval "CMD_${LOCAL_NAME_UP}_DEFINED=${__SFW_OPTION_NOT_DEFINED__}"
+   # Here we define required variables for current option
+   declare -gr "CMD_${LOCAL_NAME_UP}_NAME=${LOCAL_NAME}"
+   declare -gr "CMD_${LOCAL_NAME_UP}_TYPE=${__SFW_PARAMETER_TYPE_OPTION__}"
+   declare -g  "CMD_${LOCAL_NAME_UP}_DEFINED=${__SFW_OPTION_NOT_DEFINED__}"
+
+
+   # Here we define and register new named array
+   # with defined variables names for just defined option
+   declare -n arr="CMD_AVAILABLE_PARAMETERS_${LOCAL_NAME_UP}"
+   arr=(
+         "CMD_${LOCAL_NAME_UP}_NAME"
+         "CMD_${LOCAL_NAME_UP}_TYPE"
+         "CMD_${LOCAL_NAME_UP}_DEFINED"
+      )
+   CMD_PARAMETERS_REGISTRY[${LOCAL_NAME}]="CMD_AVAILABLE_PARAMETERS_${LOCAL_NAME_UP}"
 }
 
 # __define_parameter__ "name" "ARGUMENT|OPTION" \
@@ -327,9 +549,6 @@ function __define_parameter__( )
 
    CMD_PARAMETERS+=( "${LOCAL_NAME}" )
    __test_defined_parameter__ ${LOCAL_NAME}
-
-   local LOCAL_NAME_UP="${LOCAL_NAME^^}"
-   eval "CMD_${LOCAL_NAME_UP}_TEST="__${LOCAL_NAME}__""
 }
 
 # define_required_argument "name" \
@@ -464,10 +683,12 @@ function get_parameter_values( )
    fi
 }
 
-# This method returns the value of the parameter with name defined in the first argument
-# and by index optionally defined in the second argument. If index is not passed 0 will
-# be used by default.
-# If parameter was not passed in the command line then default values will be processed.
+# This method returns the value of the parameter with name
+# defined in the first argument and by index optionally defined
+# in the second argument.
+# If index is not passed 0 will be used by default.
+# If parameter was not passed in the command line then
+# default values will be processed.
 # log_info $( get_parameter_value "name" [index] )
 function get_parameter_value( )
 {
@@ -491,8 +712,8 @@ function get_parameter_value( )
 
 
 # Description:
-# 'filer_parameters' filters a list of command-line arguments and returns only
-# those arguments and options whose keys are explicitly allowed.
+# 'filer_parameters' filters a list of command-line arguments and
+# returns only those arguments and options whose keys are explicitly allowed.
 # The function supports arguments in the following forms:
 #     --option — a standalone flag
 #     --arg=value — an option with an inline value
@@ -553,11 +774,13 @@ function filer_parameters( )
 # map_parameters <source_array> <mapping_dictionary> <output_array>
 # 
 # Parameters:
-# source_array - Name of the array containing the original command-line arguments.
+# source_array - Name of the array containing the original
+#                command-line arguments.
 # mapping_dictionary - Name of an associative array where:
 #     - the key is an argument name (e.g. --width)
 #     - the value is the string that should replace it in the output (e.g. -w)
-# output_array - Name of the array that will receive the filtered and transformed arguments.
+# output_array - Name of the array that will receive the filtered and
+#                transformed arguments.
 # 
 # All parameters are passed by reference using Bash namerefs (local -n).
 function map_parameters( )
@@ -594,8 +817,8 @@ function map_parameters( )
 
 
 # Description:
-# 'filter_map_parameters' filters and transforms a list of command-line arguments using 
-# a mapping dictionary.
+# 'filter_map_parameters' filters and transforms a list of
+# command-line arguments using a mapping dictionary.
 # The function accepts a list of arguments in the form:
 #     --option — a standalone flag
 #     --arg=value — an option with an inline value
@@ -609,11 +832,13 @@ function map_parameters( )
 # map_args <source_array> <mapping_dictionary> <output_array>
 # 
 # Parameters:
-# source_array - Name of the array containing the original command-line arguments.
+# source_array - Name of the array containing the original
+#                command-line arguments.
 # mapping_dictionary - Name of an associative array where:
 #     - the key is an allowed argument name (e.g. --width)
 #     - the value is the string that should replace it in the output (e.g. -w)
-# output_array - Name of the array that will receive the filtered and transformed arguments.
+# output_array - Name of the array that will receive the filtered and
+#                transformed arguments.
 # 
 # All parameters are passed by reference using Bash namerefs (local -n).
 function filter_map_parameters( )
