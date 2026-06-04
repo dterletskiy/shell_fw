@@ -1,7 +1,6 @@
 [ -n "${__SFW_ARG_PARS_SH__}" ] && return 0 || readonly __SFW_ARG_PARS_SH__=1
 
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/log.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/print.sh"
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/ui.sh"
 
 
@@ -71,11 +70,11 @@ function __print_parameters_info__( )
 
          STRING+="   defined: '${!_DEFINED_}'"$'\n'
       else
-         print_error "undefined parameter type: '${PARAMETER}'"
+         log_error "undefined parameter type: '${PARAMETER}'"
          exit 1
       fi
-      print_ok ${STRING_NAME}
-      print_info ${STRING}
+      log_debug ${STRING_NAME}
+      log_info ${STRING}
    done
 
    # IFS=" "
@@ -91,21 +90,21 @@ function __validate_argument__( )
 
    if [[ 0 -eq ${#LOCAL_PARAMETER_DEFINED_VALUES[@]} ]]; then
       if [[ "${__SFW_PARAMETER_REQUIRED__}" == "${LOCAL_PARAMETER_CRITICAL}" ]]; then
-         print_error "'${LOCAL_PARAMETER_NAME}' is not defined but it is required"
+         log_error "'${LOCAL_PARAMETER_NAME}' is not defined but it is required"
          exit 1
       fi
    else
       for ITEM in "${LOCAL_PARAMETER_DEFINED_VALUES[@]}"; do
-         # print_info "Processing value: '${ITEM}'"
+         # log_info "Processing value: '${ITEM}'"
          if [[ 0 -eq ${#LOCAL_PARAMETER_ALLOWED_VALUES[@]} ]]; then
-            # print_ok "'${LOCAL_PARAMETER_NAME}' can has any value"
+            # log_debug "'${LOCAL_PARAMETER_NAME}' can has any value"
             :
          # elif [[ ! "${LOCAL_PARAMETER_ALLOWED_VALUES[@]}" =~ "${ITEM}" ]]; then
          elif [[ ! " ${LOCAL_PARAMETER_ALLOWED_VALUES[@]} " == *" ${ITEM} "* ]]; then
-            print_error "'${LOCAL_PARAMETER_NAME}' is defined but invalid: '${ITEM}'"
+            log_error "'${LOCAL_PARAMETER_NAME}' is defined but invalid: '${ITEM}'"
             exit 1
          else
-            # print_ok "'${LOCAL_PARAMETER_NAME}' is defined and valid: '${ITEM}'"
+            # log_debug "'${LOCAL_PARAMETER_NAME}' is defined and valid: '${ITEM}'"
             :
          fi
       done
@@ -118,10 +117,10 @@ function __validate_option__( )
    local LOCAL_OPTION_DEFINED=${2}
 
    if [ "${LOCAL_OPTION_DEFINED}" == "${__SFW_OPTION_DEFINED__}" ]; then
-      # print_info "'${LOCAL_OPTION_NAME}' defined"
+      # log_info "'${LOCAL_OPTION_NAME}' defined"
       :
    else
-      # print_info "'${LOCAL_OPTION_NAME}' not defined"
+      # log_info "'${LOCAL_OPTION_NAME}' not defined"
       :
    fi
 }
@@ -133,7 +132,7 @@ function __validate_parameters__( )
       local _NAME_="CMD_${PARAMETER}_NAME"
       local _TYPE_="CMD_${PARAMETER}_TYPE"
 
-      # print_info "Validating parameter: '${PARAMETER}'"
+      # log_info "Validating parameter: '${PARAMETER}'"
       if [ ${!_TYPE_} == ${__SFW_PARAMETER_TYPE_ARGUMENT__} ]; then
          local _DEFINED_VALUES_="CMD_${PARAMETER}_DEFINED_VALUES"
          local _ALLOWED_VALUES_="CMD_${PARAMETER}_ALLOWED_VALUES"
@@ -143,7 +142,7 @@ function __validate_parameters__( )
          local _DEFINED_="CMD_${PARAMETER}_DEFINED"
          __validate_option__ ${!_NAME_} ${!_DEFINED_}
       else
-         print_error "undefined parameter type: '${PARAMETER}'"
+         log_error "undefined parameter type: '${PARAMETER}'"
          exit 1
       fi
    done
@@ -169,7 +168,7 @@ function parse_arguments( )
             if [[ ${option} == --${!_NAME_}=* ]]; then
                local __TEMP__="${option#*=}"
                if [ -z "${__TEMP__}" ]; then
-                  print_error "'--${!_NAME_}' is defined but has no value"
+                  log_error "'--${!_NAME_}' is defined but has no value"
                   exit 1
                fi
                __split_string_add_to_array__ "${__TEMP__}" \
@@ -187,7 +186,7 @@ function parse_arguments( )
       done
 
       if [[ ${OPTION_PROCESSED} -eq 0 ]]; then
-         print_error "unsupported parameter '${option}'"
+         log_error "unsupported parameter '${option}'"
          exit 1
       fi
    done
@@ -207,51 +206,51 @@ function __test_defined_parameter__( )
 
    local _NAME_="CMD_${LOCAL_NAME_UP}_NAME"
    if [ -z ${!_NAME_+x} ]; then
-      print_error "'${_NAME_}' is not defined"
+      log_error "'${_NAME_}' is not defined"
       exit 1
    fi
 
    local _TYPE_="CMD_${LOCAL_NAME_UP}_TYPE"
    if [ -z ${!_TYPE_+x} ]; then
-      print_error "'${_TYPE_}' is not defined"
+      log_error "'${_TYPE_}' is not defined"
       exit 1
    fi
 
    if [ ${!_TYPE_} == ${__SFW_PARAMETER_TYPE_ARGUMENT__} ]; then
       local _REQUIRED_="CMD_${LOCAL_NAME_UP}_REQUIRED"
       if [ -z ${!_REQUIRED_+x} ]; then
-         print_error "'${_REQUIRED_}' is not defined"
+         log_error "'${_REQUIRED_}' is not defined"
          exit 1
       fi
 
       local _ALLOWED_VALUES_="CMD_${LOCAL_NAME_UP}_ALLOWED_VALUES"
       if ! declare -p ${_ALLOWED_VALUES_} 2>/dev/null | grep -q 'declare -a'; then
-         print_error "'${_ALLOWED_VALUES_}' is not defined 3"
+         log_error "'${_ALLOWED_VALUES_}' is not defined 3"
       fi
 
       local _DEFAULT_VALUES_="CMD_${LOCAL_NAME_UP}_DEFAULT_VALUES"
       if ! declare -p ${_DEFAULT_VALUES_} 2>/dev/null | grep -q 'declare -a'; then
-         print_error "'${_DEFAULT_VALUES_}' is not defined 3"
+         log_error "'${_DEFAULT_VALUES_}' is not defined 3"
       fi
 
       local _DEFINED_VALUES_="CMD_${LOCAL_NAME_UP}_DEFINED_VALUES"
       if ! declare -p ${_DEFINED_VALUES_} 2>/dev/null | grep -q 'declare -a'; then
-         print_error "'${_DEFINED_VALUES_}' is not defined 3"
+         log_error "'${_DEFINED_VALUES_}' is not defined 3"
       fi
    elif [ ${!_TYPE_} == ${__SFW_PARAMETER_TYPE_OPTION__} ]; then
       local _DEFINED_="CMD_${LOCAL_NAME_UP}_DEFINED"
       if [ -z ${!_DEFINED_+x} ]; then
-         print_error "'${_DEFINED_}' is not defined"
+         log_error "'${_DEFINED_}' is not defined"
          exit 1
       fi
    else
-      print_error "undefined parameter type: '${!_NAME_}'"
+      log_error "undefined parameter type: '${!_NAME_}'"
       exit 1
    fi
 }
 
 # Calling this function like this:
-# __define_parameter__ "xxxxx" "ARGUMENT" \
+# __define_argument__ "xxxxx" "ARGUMENT" \
 #    ["REQUIRED" ["allowed_value_1 ... allowed_value_n" ["default_value_1 ... default_value_n"]]]
 # automatically defined next varuables:
 #    - CMD_XXXXX_NAME="xxxxx"
@@ -281,7 +280,7 @@ function __define_argument__( )
 }
 
 # Calling this function like this:
-# __define_parameter__ "xxxxx" "OPTION"
+# __define_option__ "xxxxx" "OPTION"
 # automatically defined next varuables:
 #    - CMD_XXXXX_NAME="xxxxx"
 #    - CMD_XXXXX_TYPE="OPTION"
@@ -310,7 +309,7 @@ function __define_parameter__( )
    elif [ ${LOCAL_TYPE} == ${__SFW_PARAMETER_TYPE_OPTION__} ]; then
       __define_option__ "$@"
    else
-      print_error "undefined parameter type: '${LOCAL_NAME}'"
+      log_error "undefined parameter type: '${LOCAL_NAME}'"
       exit 1
    fi
 
@@ -409,27 +408,27 @@ function get_option( )
    local LOCAL_OPTION_VARIABLE_NAME="CMD_${LOCAL_NAME_UP}_DEFINED"
    local _DEFINED_=${!LOCAL_OPTION_VARIABLE_NAME}
    local LOCAL_RESULT=${LOCAL_ERR_VALUE}
-   # print_info "Processing option '${LOCAL_NAME}' => ${LOCAL_OPTION_VARIABLE_NAME} = ${_DEFINED_}"
+   # log_info "Processing option '${LOCAL_NAME}' => ${LOCAL_OPTION_VARIABLE_NAME} = ${_DEFINED_}"
 
    if [ ${_DEFINED_} == ${__SFW_OPTION_DEFINED__} ]; then
       LOCAL_RESULT=${LOCAL_POS_VALUE}
-      # print_info "option '${LOCAL_NAME}' defined"
+      # log_info "option '${LOCAL_NAME}' defined"
    elif [ ${_DEFINED_} == ${__SFW_OPTION_NOT_DEFINED__} ]; then
       LOCAL_RESULT=${LOCAL_NEG_VALUE}
-      # print_info "option '${LOCAL_NAME}' not defined"
+      # log_info "option '${LOCAL_NAME}' not defined"
    elif [ -z ${_DEFINED_+x} ]; then
       LOCAL_RESULT=${LOCAL_ERR_VALUE}
-      # print_error "invalid option '${LOCAL_NAME}'"
+      # log_error "invalid option '${LOCAL_NAME}'"
    else
       LOCAL_RESULT=${LOCAL_ERR_VALUE}
-      # print_error "invalid option '${LOCAL_NAME}' = ${_DEFINED_}"
+      # log_error "invalid option '${LOCAL_NAME}' = ${_DEFINED_}"
    fi
 
    echo ${LOCAL_RESULT}
 }
 
 # get_parameter_values "test" VALUES
-# print_info "${VALUES[*]}"
+# log_info "${VALUES[*]}"
 function get_parameter_values( )
 {
    local LOCAL_NAME=${1}
@@ -450,7 +449,7 @@ function get_parameter_values( )
 # and by index optionally defined in the second argument. If index is not passed 0 will
 # be used by default.
 # If parameter was not passed in the command line then default values will be processed.
-# print_info $( get_parameter_value "name" [index] )
+# log_info $( get_parameter_value "name" [index] )
 function get_parameter_value( )
 {
    local LOCAL_NAME=${1}
@@ -664,12 +663,12 @@ function __test_parameters_transform__( )
 #
 # parse_arguments "${@}"
 #
-# print_info $( get_option "debug" --pos="true" --neg="false" )
+# log_info $( get_option "debug" --pos="true" --neg="false" )
 #
 # get_parameter_values "action" VALUES
-# print_info "${VALUES[*]}"
+# log_info "${VALUES[*]}"
 #
-# print_info $( get_parameter_value "target" 0 )
+# log_info $( get_parameter_value "target" 0 )
 #
 # ----------------------------------------------------------------------
 #
