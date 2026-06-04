@@ -30,55 +30,67 @@ function __split_string_add_to_array__( )
    LOCAL_ARRAY+=("${__ARRAY__[@]}")
 }
 
-function __print_parameters_help__( )
-{
-   __print_parameters_info__
-}
-
 function __print_parameters_info__( )
 {
+   log_cyan $'\n'"-------------------------------------------------------------------"$'\n'
+   log_cyan "Application parameters information:"
+
+   local IFS_BACKUP=${IFS}
+   IFS=","
+
    for _PARAMETER_ in "${CMD_PARAMETERS[@]}"; do
       local PARAMETER=${_PARAMETER_^^}
       local _NAME_="CMD_${PARAMETER}_NAME"
       local _TYPE_="CMD_${PARAMETER}_TYPE"
 
-      local IFS_BACKUP=${IFS}
-      IFS=","
+      log_green "   --${!_NAME_}:"
 
-      local STRING_NAME="--${!_NAME_}:"
-      local STRING="   type: '${!_TYPE_}'"$'\n'
+      log_yellow "      type: '${!_TYPE_}'"
       if [ ${!_TYPE_} == ${__SFW_PARAMETER_TYPE_ARGUMENT__} ]; then
          local _ALLOWED_VALUES_="CMD_${PARAMETER}_ALLOWED_VALUES"
          local _DEFAULT_VALUES_="CMD_${PARAMETER}_DEFAULT_VALUES"
          local _DEFINED_VALUES_="CMD_${PARAMETER}_DEFINED_VALUES"
          local _REQUIRED_="CMD_${PARAMETER}_REQUIRED"
 
-         STRING+="   required: '${!_REQUIRED_}'"$'\n'
+         log_lightcyan "      required: '${!_REQUIRED_}'"
 
-         STRING+="   values:"$'\n'
+         log_lightcyan "      values:"
 
          declare -n __ALLOWED_ARRAY__=${_ALLOWED_VALUES_}
-         STRING+="      allowed [${#__ALLOWED_ARRAY__[@]}]: '${__ALLOWED_ARRAY__[*]}'"$'\n'
+         log_lightgray "         allowed [${#__ALLOWED_ARRAY__[@]}]: '${__ALLOWED_ARRAY__[*]}'"
 
          declare -n __DEFAULT_ARRAY__=${_DEFAULT_VALUES_}
-         STRING+="      default [${#__DEFAULT_ARRAY__[@]}]: '${__DEFAULT_ARRAY__[*]}'"$'\n'
+         log_lightgray "         default [${#__DEFAULT_ARRAY__[@]}]: '${__DEFAULT_ARRAY__[*]}'"
 
          declare -n __DEFINED_ARRAY__=${_DEFINED_VALUES_}
-         STRING+="      defined [${#__DEFINED_ARRAY__[@]}]: '${__DEFINED_ARRAY__[*]}'"$'\n'
+         log_lightgray "         defined [${#__DEFINED_ARRAY__[@]}]: '${__DEFINED_ARRAY__[*]}'"
+
+         log_lightcyan "      variables:"
+         log_lightgray "         ${_NAME_}:              ${!_NAME_}"
+         log_lightgray "         ${_TYPE_}:              ${!_TYPE_}"
+         log_lightgray "         ${!__ALLOWED_ARRAY__}:  ${__ALLOWED_ARRAY__[*]}"
+         log_lightgray "         ${!__DEFAULT_ARRAY__}:  ${__DEFAULT_ARRAY__[*]}"
+         log_lightgray "         ${!__DEFINED_ARRAY__}:  ${__DEFINED_ARRAY__[*]}"
       elif [ ${!_TYPE_} == ${__SFW_PARAMETER_TYPE_OPTION__} ]; then
          local _DEFINED_="CMD_${PARAMETER}_DEFINED"
 
-         STRING+="   defined: '${!_DEFINED_}'"$'\n'
+         log_lightcyan "      defined: '${!_DEFINED_}'"
+
+         log_lightcyan "      variables:"
+         log_lightgray "         ${_NAME_}:              ${!_NAME_}"
+         log_lightgray "         ${_TYPE_}:              ${!_TYPE_}"
+         log_lightgray "         ${_DEFINED_}:           ${!_DEFINED_}"
+
       else
          log_error "undefined parameter type: '${PARAMETER}'"
          exit 1
       fi
-      log_debug ${STRING_NAME}
-      log_info ${STRING}
    done
 
    # IFS=" "
    IFS=${IFS_BACKUP}
+
+   log_cyan $'\n'"-------------------------------------------------------------------"$'\n'
 }
 
 function __validate_argument__( )
@@ -153,7 +165,7 @@ function parse_arguments( )
 {
    for option in "$@"; do
       if [[ ${option} == --help ]]; then
-         __print_parameters_help__
+         __print_parameters_info__
          exit 0
       fi
 
@@ -315,6 +327,9 @@ function __define_parameter__( )
 
    CMD_PARAMETERS+=( "${LOCAL_NAME}" )
    __test_defined_parameter__ ${LOCAL_NAME}
+
+   local LOCAL_NAME_UP="${LOCAL_NAME^^}"
+   eval "CMD_${LOCAL_NAME_UP}_TEST="__${LOCAL_NAME}__""
 }
 
 # define_required_argument "name" \
@@ -364,7 +379,9 @@ function define_optional_argument( )
       esac
    done
 
-   __define_parameter__ "${LOCAL_NAME}" "${__SFW_PARAMETER_TYPE_ARGUMENT__}" \
+   __define_parameter__ \
+      "${LOCAL_NAME}" \
+      "${__SFW_PARAMETER_TYPE_ARGUMENT__}" \
       "${__SFW_PARAMETER_OPTIONAL__}" \
       "${LOCAL_ALLOWED_VALUES}" \
       "${LOCAL_DEFAULT_VALUES}"
@@ -375,7 +392,9 @@ function define_option( )
 {
    local LOCAL_NAME="${1}"
 
-   __define_parameter__ "${LOCAL_NAME}" "${__SFW_PARAMETER_TYPE_OPTION__}"
+   __define_parameter__ \
+      "${LOCAL_NAME}" \
+      "${__SFW_PARAMETER_TYPE_OPTION__}"
 }
 
 # echo $( get_option "dlt" [--pos="true"] [--neg="false"] )
