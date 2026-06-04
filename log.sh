@@ -6,10 +6,10 @@ source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/constants
 
 readonly __SWF_LOG_SPLIT_ARGUMENTS__=1
 readonly __SWF_LOG_WITH_COLOR__=1
-readonly __SWF_LOG_WITH_IMAGES__=1
-readonly __SWF_LOG_WITH_FORMAT__=1
-readonly __SWF_LOG_WITH_TIMESTAMP__=1
-readonly __SWF_LOG_WITH_CODEPOINT__=1
+readonly __SWF_LOG_WITH_IMAGES__=0
+readonly __SWF_LOG_WITH_FORMAT__=0
+readonly __SWF_LOG_WITH_TIMESTAMP__=0
+readonly __SWF_LOG_WITH_CODEPOINT__=0
 
 declare -A -g __SWF_LOG_SKIP_STACK_FUNCTIONS__=(
    [__log__]=1
@@ -39,6 +39,26 @@ function __log__( )
       [ERROR]=${ECHO_FG_Red}
       [CRITICAL]=${ECHO_FG_Magenta}
       [FATAL]=${ECHO_FG_Default}${ECHO_BG_Red}
+
+
+      [RED]=${ECHO_FG_Red}
+      [GREEN]=${ECHO_FG_Green}
+      [YELLOW]=${ECHO_FG_Yellow}
+      [BLUE]=${ECHO_FG_Blue}
+      [MAGENTA]=${ECHO_FG_Magenta}
+      [CYAN]=${ECHO_FG_Cyan}
+
+      [LIGHTRED]=${ECHO_FG_LightRed}
+      [LIGHTGREEN]=${ECHO_FG_LightGreen}
+      [LIGHTYELLOW]=${ECHO_FG_LightYellow}
+      [LIGHTBLUE]=${ECHO_FG_LightBlue}
+      [LIGHTMAGENTA]=${ECHO_FG_LightMagenta}
+      [LIGHTCYAN]=${ECHO_FG_LightCyan}
+
+      [BLACK]=${ECHO_FG_Black}
+      [DARKGRAY]=${ECHO_FG_DarkGray}
+      [LIGHTGRAY]=${ECHO_FG_LightGray}
+      [WHITE]=${ECHO_FG_White}
    )
 
    declare -A __TRACE_TYPE_TO_IMAGE__=(
@@ -174,6 +194,104 @@ function log_fatal( )
 {
    local LOCAL_MESSAGE=$@
    __log__ FATAL LOCAL_MESSAGE[@]
+}
+
+
+
+function log_red( )
+{
+   local LOCAL_MESSAGE=$@
+   __log__ RED LOCAL_MESSAGE[@]
+}
+
+function log_green( )
+{
+   local LOCAL_MESSAGE=$@
+   __log__ GREEN LOCAL_MESSAGE[@]
+}
+
+function log_yellow( )
+{
+   local LOCAL_MESSAGE=$@
+   __log__ YELLOW LOCAL_MESSAGE[@]
+}
+
+function log_blue( )
+{
+   local LOCAL_MESSAGE=$@
+   __log__ BLUE LOCAL_MESSAGE[@]
+}
+
+function log_magenta( )
+{
+   local LOCAL_MESSAGE=$@
+   __log__ MAGENTA LOCAL_MESSAGE[@]
+}
+
+function log_cyan( )
+{
+   local LOCAL_MESSAGE=$@
+   __log__ CYAN LOCAL_MESSAGE[@]
+}
+
+function log_lightred( )
+{
+   local LOCAL_MESSAGE=$@
+   __log__ LIGHTRED LOCAL_MESSAGE[@]
+}
+
+function log_lightgreen( )
+{
+   local LOCAL_MESSAGE=$@
+   __log__ LIGHTGREEN LOCAL_MESSAGE[@]
+}
+
+function log_lightyellow( )
+{
+   local LOCAL_MESSAGE=$@
+   __log__ LIGHTYELLOW LOCAL_MESSAGE[@]
+}
+
+function log_lightblue( )
+{
+   local LOCAL_MESSAGE=$@
+   __log__ LIGHTBLUE LOCAL_MESSAGE[@]
+}
+
+function log_lightmagenta( )
+{
+   local LOCAL_MESSAGE=$@
+   __log__ LIGHTMAGENTA LOCAL_MESSAGE[@]
+}
+
+function log_lightcyan( )
+{
+   local LOCAL_MESSAGE=$@
+   __log__ LIGHTCYAN LOCAL_MESSAGE[@]
+}
+
+function log_black( )
+{
+   local LOCAL_MESSAGE=$@
+   __log__ BLACK LOCAL_MESSAGE[@]
+}
+
+function log_darkgray( )
+{
+   local LOCAL_MESSAGE=$@
+   __log__ DARKGRAY LOCAL_MESSAGE[@]
+}
+
+function log_lightgray( )
+{
+   local LOCAL_MESSAGE=$@
+   __log__ LIGHTGRAY LOCAL_MESSAGE[@]
+}
+
+function log_white( )
+{
+   local LOCAL_MESSAGE=$@
+   __log__ WHITE LOCAL_MESSAGE[@]
 }
 
 
