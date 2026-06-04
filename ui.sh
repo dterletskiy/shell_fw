@@ -117,3 +117,34 @@ function test_required_util( )
       return 127
    fi
 }
+
+
+
+# var_exists()
+#
+# Checks whether a variable exists, regardless of whether its value
+# is empty.
+#
+# Parameters:
+#   $1 - Variable name
+#
+# Return values:
+#   0 - Variable exists
+#   1 - Variable does not exist
+#
+# Notes:
+#   - Uses [[ -v ]] on Bash 4.2+
+#   - Falls back to parameter expansion on older Bash versions
+#
+var_exists()
+{
+   local var_name=$1
+
+   if (( BASH_VERSINFO[0] > 4 )) ||
+      (( BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 ))
+   then
+      [[ -v $var_name ]]
+   else
+      [[ ${!var_name+x} ]]
+   fi
+}
