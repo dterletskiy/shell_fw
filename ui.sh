@@ -136,7 +136,7 @@ function test_required_util( )
 #   - Uses [[ -v ]] on Bash 4.2+
 #   - Falls back to parameter expansion on older Bash versions
 #
-var_exists()
+function var_exists( )
 {
    local var_name=$1
 
