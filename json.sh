@@ -73,7 +73,7 @@ function json_get_value( )
    shift 2
 
    test_required_util "jq" || return 127
-   json_validate "$json" || return 2
+   json_validate "$json" || return 1
 
    local jq_expr='.'
 
@@ -87,33 +87,45 @@ function json_get_value( )
    done
 
    local json_type
-   json_type=$( jq -e -r "$jq_expr | type" <<< "$json" 2> /dev/null ) || return 1
+   json_type=$( jq -e -r "$jq_expr | type" <<< "$json" 2> /dev/null ) || return 2
 
    local decl
-   decl=$( declare -p "$out_name" 2> /dev/null )
+   get_variable_type "${out_name}" decl
 
+   # log_info "processing:"
+   # log_info "   json_type: ${json_type}"
+   # log_info "   jq_expr: ${jq_expr}"
+   # log_info "   decl: ${decl}"
+
+   out_ref=( )
    case "$json_type" in
 
       array)
-         if [[ "$decl" != "declare -a "* ]]; then
+         if [[ "$decl" != "array" ]]; then
             return 3
          fi
-         out_ref=()
-         mapfile -t out_ref < <( jq -e -c "$jq_expr[]" <<< "$json" ) || return 1
+         local tmp
+         tmp=$( jq -e -c "$jq_expr[]" <<< "$json" ) || return 4
+         mapfile -t out_ref <<< "$tmp"
+         # mapfile -t out_ref < <( jq -e -c "$jq_expr[]" <<< "$json" ) || return 1
       ;;
 
       object)
-         if [[ "$decl" == "declare -a "* ]]; then
-            return 3
+         if [[ "$decl" == "array" ]]; then
+            return 5
          fi
-         out_ref=$( jq -e -c "$jq_expr" <<< "$json" 2> /dev/null ) || return 1
+         out_ref=$( jq -e -c "$jq_expr" <<< "$json" 2> /dev/null ) || return 6
+      ;;
+
+      null)
+         return 7
       ;;
 
       *)
-         if [[ "$decl" == "declare -a "* ]]; then
-            return 3
+         if [[ "$decl" == "array" ]]; then
+            return 8
          fi
-         out_ref=$( jq -e -r "$jq_expr" <<< "$json" 2> /dev/null ) || return 1
+         out_ref=$( jq -e -r "$jq_expr" <<< "$json" 2> /dev/null ) || return 9
       ;;
 
    esac
@@ -161,13 +173,12 @@ function json_set_value( )
 
    out_ref=""
 
-   test_required_util "jq" || return $?
-   json_validate "${json}" || return 2
+   test_required_util "jq" || return 127
+   json_validate "${json}" || return 1
 
    local jq_path='.'
 
-   for key in "$@"
-   do
+   for key in "$@"; do
       if [[ "$key" =~ ^[0-9]+$ ]]; then
          jq_path+="[$key]"
       else
@@ -182,12 +193,91 @@ function json_set_value( )
    local rc=$?
 
    if [[ $rc -ne 0 ]]; then
-      return 1
+      return 2
    fi
 
    out_ref="$new_json"
    return 0
 }
+
+
+
+#
+# Append a value to an existing JSON array.
+#
+# Uses jq to append a new element to a JSON array located at the
+# specified path. The original JSON is not modified; the updated
+# JSON document is returned in the output variable.
+#
+# Arguments:
+#   $1  - JSON string
+#   $2  - output variable name (nameref)
+#   $3  - value to append
+#   $4+ - path to the target array (keys and/or numeric indices)
+#
+# Return codes:
+#   0   - success
+#   1   - target path not found, target is not an array,
+#         or jq evaluation failed
+#   2   - invalid JSON (basic validation failed)
+#   127 - required utility (jq) is not available
+#
+# Notes:
+#   - Requires jq to be installed.
+#   - Numeric path elements are treated as array indices.
+#   - String path elements are treated as object keys.
+#   - The target JSON value must already exist and be an array.
+#   - The appended value is treated as a JSON string.
+#   - Performs only a simple JSON sanity check.
+#
+# Example:
+#   declare updated_json
+#
+#   json_add_array_value \
+#      "$json" \
+#      updated_json \
+#      "recovery" \
+#      arguments project values allowed
+#
+function json_add_array_value( )
+{
+   local json="$1"
+   local out_name="$2"
+   local value="$3"
+   local -n out_ref=$out_name
+   shift 3
+
+   test_required_util "jq" || return 127
+   json_validate "$json" || return 1
+
+   local jq_expr='.'
+
+   local key
+   for key in "$@"; do
+      if [[ "$key" =~ ^[0-9]+$ ]]; then
+         jq_expr+="[$key]"
+      else
+         jq_expr+="[\"$key\"]"
+      fi
+   done
+
+   out_ref=$(
+         jq \
+            --arg value "$value" \
+            "$jq_expr += [ \$value ]" \
+            <<< "$json" \
+            2> /dev/null
+      ) || return 2
+
+   return 0
+}
+
+
+
+# json_remove_array_value
+# json_remove_key
+# json_has_key
+# json_get_keys
 
 
 
