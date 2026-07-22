@@ -71,3 +71,47 @@ function find_extentions_in_dir( )
       LOCAL_FILE_LIST+=( ${LOCAL_RESULT_ITEM} )
    done
 }
+
+#
+# Get the names of all subdirectories located directly inside a specified
+# directory.
+#
+# Parameters:
+#    $1 - Path to the directory to scan.
+#    $2 - Name of an array variable that will receive the list of
+#         subdirectory names.
+#
+# Returns:
+#    0 - Success.
+#    1 - Invalid arguments or the specified directory does not exist.
+#
+# Notes:
+#    - Only immediate subdirectories are returned.
+#    - Only directory names are returned; parent paths are omitted.
+#    - Hidden directories (whose names begin with '.') are not included.
+#
+function get_dir_names_list( )
+{
+   if (( $# != 2 )); then
+      log_error "Usage: get_dir_names_list <directory> <result>"
+      return 1
+   fi
+
+   local directory="$1"
+   local -n result_ref="$2"
+
+   if [[ ! -d "${directory}" ]]; then
+      log_error "'${directory}' is not a directory"
+      return 1
+   fi
+
+   result_ref=( )
+
+   local entry
+   for entry in "${directory}"/*; do
+      [[ -d "${entry}" ]] || continue
+      result_ref+=( "${entry##*/}" )
+   done
+
+   return 0
+}
