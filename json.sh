@@ -97,7 +97,6 @@ function json_get_value( )
    # log_info "   jq_expr: ${jq_expr}"
    # log_info "   decl: ${decl}"
 
-   out_ref=( )
    case "$json_type" in
 
       array)
@@ -106,6 +105,7 @@ function json_get_value( )
          fi
          local tmp
          tmp=$( jq -e -c "$jq_expr[]" <<< "$json" ) || return 4
+         out_ref=( )
          mapfile -t out_ref <<< "$tmp"
          # mapfile -t out_ref < <( jq -e -c "$jq_expr[]" <<< "$json" ) || return 1
       ;;
@@ -114,6 +114,7 @@ function json_get_value( )
          if [[ "$decl" == "array" ]]; then
             return 5
          fi
+         out_ref=""
          out_ref=$( jq -e -c "$jq_expr" <<< "$json" 2> /dev/null ) || return 6
       ;;
 
@@ -125,6 +126,7 @@ function json_get_value( )
          if [[ "$decl" == "array" ]]; then
             return 8
          fi
+         out_ref=""
          out_ref=$( jq -e -r "$jq_expr" <<< "$json" 2> /dev/null ) || return 9
       ;;
 
