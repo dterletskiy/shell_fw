@@ -138,6 +138,53 @@ function get_variable_type( )
 
 
 
+#
+# Test whether a Bash variable has the expected type.
+#
+# Determines the type of a variable and compares it with the expected
+# type.
+#
+# Arguments:
+#   $1 - variable name
+#   $2 - expected type
+#
+# Supported types:
+#   scalar
+#   array
+#   map
+#   nameref
+#   integer
+#
+# Return codes:
+#   0 - variable has the expected type
+#   1 - variable type does not match the expected type
+#   2 - variable does not exist
+#
+# Example:
+#   declare value
+#   declare -a array
+#
+#   if test_variable_type value scalar; then
+#      echo "value is a scalar"
+#   fi
+#
+#   if test_variable_type array array; then
+#      echo "array is an indexed array"
+#   fi
+#
+function test_variable_type( )
+{
+   local var_name="$1"
+   local expected_type="$2"
+
+   local variable_type
+   get_variable_type "$var_name" variable_type || return 2
+
+   [[ "$variable_type" == "$expected_type" ]]
+}
+
+
+
 function test_get_variable_attributes( )
 {
    declare value="abc"
