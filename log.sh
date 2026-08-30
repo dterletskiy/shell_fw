@@ -1,4 +1,4 @@
-[ -n "${__SFW_LOG_SH__}" ] && return 0 || readonly __SFW_LOG_SH__=1
+# [ -n "${__SFW_LOG_SH__}" ] && return 0 || readonly __SFW_LOG_SH__=1
 
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/constants/colors.sh"
 
@@ -62,6 +62,16 @@ function log_enable_codepoint( )
 function log_disable_codepoint( )
 {
    __SWF_LOG_WITH_CODEPOINT__=0
+}
+
+__SWF_LOG_TO_STDERR__=0
+function log_enable_stderr( )
+{
+   __SWF_LOG_TO_STDERR__=1
+}
+function log_disable_stderr( )
+{
+   __SWF_LOG_TO_STDERR__=0
 }
 
 
@@ -159,18 +169,23 @@ function __log__( )
    local LOCAL_MESSAGE=("${!2}")
    local COLOR=""
    local RESET_COLOR=""
+   local LOG_FD=1
+
+   if [[ 0 -ne ${__SWF_LOG_TO_STDERR__} ]]; then
+      LOG_FD=2
+   fi
 
    if [[ 0 -ne ${__SWF_LOG_WITH_TIMESTAMP__} ]]; then
       (( __SWF_LOG_WITH_COLOR__ )) && \
          COLOR="${ECHO_FG_LightCyan}" || COLOR=""
       (( __SWF_LOG_WITH_COLOR__ )) && \
          RESET_COLOR="${ECHO_RESET}" || RESET_COLOR=""
-      printf "${COLOR}%-25s${RESET_COLOR}" "[$(date '+%Y-%m-%d %H:%M:%S')]"
+      printf "${COLOR}%-25s${RESET_COLOR}" "[$(date '+%Y-%m-%d %H:%M:%S')]" >&${LOG_FD}
    fi
 
    if [[ 0 -ne ${__SWF_LOG_WITH_IMAGES__} ]]; then
       local emoji="${__SWF_LOG_TRACE_TYPE_TO_IMAGE__[$LOCAL_FORMAT]}"
-      printf "%s%-4s" "$emoji" ""
+      printf "%s%-4s" "$emoji" "" >&${LOG_FD}
    fi
 
    if [[ 0 -ne ${__SWF_LOG_WITH_FORMAT__} ]]; then
@@ -178,7 +193,7 @@ function __log__( )
          COLOR="${__SWF_LOG_TRACE_TYPE_TO_COLOR__[$LOCAL_FORMAT]}" || COLOR=""
       (( __SWF_LOG_WITH_COLOR__ )) && \
          RESET_COLOR="${ECHO_RESET}" || RESET_COLOR=""
-      printf "${COLOR}%-12s${RESET_COLOR}" "[${__SWF_LOG_TRACE_TYPE_TO_TEXT__[$LOCAL_FORMAT]}]"
+      printf "${COLOR}%-12s${RESET_COLOR}" "[${__SWF_LOG_TRACE_TYPE_TO_TEXT__[$LOCAL_FORMAT]}]" >&${LOG_FD}
    fi
 
    if [[ 0 -ne ${__SWF_LOG_WITH_CODEPOINT__} ]]; then
@@ -211,7 +226,7 @@ function __log__( )
       (( __SWF_LOG_WITH_COLOR__ )) && \
          RESET_COLOR="${ECHO_RESET}" || RESET_COLOR=""
 
-      printf "${COLOR}%-25s${RESET_COLOR}" "[${func}():${line}]"
+      printf "${COLOR}%-25s${RESET_COLOR}" "[${func}():${line}]" >&${LOG_FD}
    fi
 
    (( __SWF_LOG_WITH_COLOR__ )) && \
@@ -221,11 +236,11 @@ function __log__( )
 
    if [[ 0 -eq ${__SWF_LOG_SPLIT_ARGUMENTS__} ]]; then
       # No split arguments
-      printf "${COLOR}%s${RESET_COLOR}" "${LOCAL_MESSAGE[*]}"
-      printf "\n"
+      printf "${COLOR}%s${RESET_COLOR}" "${LOCAL_MESSAGE[*]}" >&${LOG_FD}
+      printf "\n" >&${LOG_FD}
    else
       # Split arguments
-      printf "${COLOR}%s${RESET_COLOR}\n" "${LOCAL_MESSAGE[@]}"
+      printf "${COLOR}%s${RESET_COLOR}\n" "${LOCAL_MESSAGE[@]}" >&${LOG_FD}
    fi
 }
 
@@ -410,6 +425,7 @@ function __log_test__( )
    local -a FORMAT_VALUES=(0 1)
    local -a TIMESTAMP_VALUES=(0 1)
    local -a CODEPOINT_VALUES=(0 1)
+   local -a STDERR_VALUES=(0 1)
 
    local SAVED_SPLIT=${__SWF_LOG_SPLIT_ARGUMENTS__}
    local SAVED_COLOR=${__SWF_LOG_WITH_COLOR__}
@@ -417,6 +433,7 @@ function __log_test__( )
    local SAVED_FORMAT=${__SWF_LOG_WITH_FORMAT__}
    local SAVED_TIMESTAMP=${__SWF_LOG_WITH_TIMESTAMP__}
    local SAVED_CODEPOINT=${__SWF_LOG_WITH_CODEPOINT__}
+   local SAVED_STDERR=${__SWF_LOG_TO_STDERR__}
 
    local split
    local color
@@ -424,6 +441,7 @@ function __log_test__( )
    local format
    local timestamp
    local codepoint
+   local stderr
    local index=0
 
    for split in "${SPLIT_VALUES[@]}"; do
@@ -432,50 +450,54 @@ function __log_test__( )
             for format in "${FORMAT_VALUES[@]}"; do
                for timestamp in "${TIMESTAMP_VALUES[@]}"; do
                   for codepoint in "${CODEPOINT_VALUES[@]}"; do
-                     __SWF_LOG_SPLIT_ARGUMENTS__=${split}
-                     __SWF_LOG_WITH_COLOR__=${color}
-                     __SWF_LOG_WITH_IMAGES__=${images}
-                     __SWF_LOG_WITH_FORMAT__=${format}
-                     __SWF_LOG_WITH_TIMESTAMP__=${timestamp}
-                     __SWF_LOG_WITH_CODEPOINT__=${codepoint}
+                     for stderr in "${STDERR_VALUES[@]}"; do
+                        __SWF_LOG_SPLIT_ARGUMENTS__=${split}
+                        __SWF_LOG_WITH_COLOR__=${color}
+                        __SWF_LOG_WITH_IMAGES__=${images}
+                        __SWF_LOG_WITH_FORMAT__=${format}
+                        __SWF_LOG_WITH_TIMESTAMP__=${timestamp}
+                        __SWF_LOG_WITH_CODEPOINT__=${codepoint}
+                        __SWF_LOG_TO_STDERR__=${stderr}
 
-                     printf "\n"
-                     printf "log test #%02d: split=%s color=%s images=%s format=%s timestamp=%s codepoint=%s\n" \
-                        "${index}" \
-                        "${split}" \
-                        "${color}" \
-                        "${images}" \
-                        "${format}" \
-                        "${timestamp}" \
-                        "${codepoint}"
+                        printf "\n"
+                        printf "log test #%02d: split=%s color=%s images=%s format=%s timestamp=%s codepoint=%s stderr=%s\n" \
+                           "${index}" \
+                           "${split}" \
+                           "${color}" \
+                           "${images}" \
+                           "${format}" \
+                           "${timestamp}" \
+                           "${codepoint}" \
+                           "${stderr}"
 
-                     log_trace "${TEST_MESSAGE[@]}"
-                     log_debug "${TEST_MESSAGE[@]}"
-                     log_info "${TEST_MESSAGE[@]}"
-                     log_notice "${TEST_MESSAGE[@]}"
-                     log_warning "${TEST_MESSAGE[@]}"
-                     log_error "${TEST_MESSAGE[@]}"
-                     log_critical "${TEST_MESSAGE[@]}"
-                     log_fatal "${TEST_MESSAGE[@]}"
+                        log_trace "${TEST_MESSAGE[@]}"
+                        log_debug "${TEST_MESSAGE[@]}"
+                        log_info "${TEST_MESSAGE[@]}"
+                        log_notice "${TEST_MESSAGE[@]}"
+                        log_warning "${TEST_MESSAGE[@]}"
+                        log_error "${TEST_MESSAGE[@]}"
+                        log_critical "${TEST_MESSAGE[@]}"
+                        log_fatal "${TEST_MESSAGE[@]}"
 
-                     log_red "${TEST_MESSAGE[@]}"
-                     log_green "${TEST_MESSAGE[@]}"
-                     log_yellow "${TEST_MESSAGE[@]}"
-                     log_blue "${TEST_MESSAGE[@]}"
-                     log_magenta "${TEST_MESSAGE[@]}"
-                     log_cyan "${TEST_MESSAGE[@]}"
-                     log_lightred "${TEST_MESSAGE[@]}"
-                     log_lightgreen "${TEST_MESSAGE[@]}"
-                     log_lightyellow "${TEST_MESSAGE[@]}"
-                     log_lightblue "${TEST_MESSAGE[@]}"
-                     log_lightmagenta "${TEST_MESSAGE[@]}"
-                     log_lightcyan "${TEST_MESSAGE[@]}"
-                     log_black "${TEST_MESSAGE[@]}"
-                     log_darkgray "${TEST_MESSAGE[@]}"
-                     log_lightgray "${TEST_MESSAGE[@]}"
-                     log_white "${TEST_MESSAGE[@]}"
+                        log_red "${TEST_MESSAGE[@]}"
+                        log_green "${TEST_MESSAGE[@]}"
+                        log_yellow "${TEST_MESSAGE[@]}"
+                        log_blue "${TEST_MESSAGE[@]}"
+                        log_magenta "${TEST_MESSAGE[@]}"
+                        log_cyan "${TEST_MESSAGE[@]}"
+                        log_lightred "${TEST_MESSAGE[@]}"
+                        log_lightgreen "${TEST_MESSAGE[@]}"
+                        log_lightyellow "${TEST_MESSAGE[@]}"
+                        log_lightblue "${TEST_MESSAGE[@]}"
+                        log_lightmagenta "${TEST_MESSAGE[@]}"
+                        log_lightcyan "${TEST_MESSAGE[@]}"
+                        log_black "${TEST_MESSAGE[@]}"
+                        log_darkgray "${TEST_MESSAGE[@]}"
+                        log_lightgray "${TEST_MESSAGE[@]}"
+                        log_white "${TEST_MESSAGE[@]}"
 
-                     (( ++index ))
+                        (( ++index ))
+                     done
                   done
                done
             done
@@ -489,4 +511,5 @@ function __log_test__( )
    __SWF_LOG_WITH_FORMAT__=${SAVED_FORMAT}
    __SWF_LOG_WITH_TIMESTAMP__=${SAVED_TIMESTAMP}
    __SWF_LOG_WITH_CODEPOINT__=${SAVED_CODEPOINT}
+   __SWF_LOG_TO_STDERR__=${SAVED_STDERR}
 }
