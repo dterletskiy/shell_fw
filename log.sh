@@ -362,3 +362,102 @@ function __test_log__( )
    log_critical ${MESSAGE}
    log_fatal ${MESSAGE}
 }
+
+
+
+function __log_test__( )
+{
+   local -a TEST_MESSAGE=()
+
+   if [[ 0 -eq $# ]]; then
+      TEST_MESSAGE=("MESSAGE" "MESSAGE WITH SPACES" "symbols: * ? [ ]")
+   else
+      TEST_MESSAGE=("$@")
+   fi
+
+   local -a SPLIT_VALUES=(0 1)
+   local -a COLOR_VALUES=(0 1)
+   local -a IMAGE_VALUES=(0 1)
+   local -a FORMAT_VALUES=(0 1)
+   local -a TIMESTAMP_VALUES=(0 1)
+   local -a CODEPOINT_VALUES=(0 1)
+
+   local SAVED_SPLIT=${__SWF_LOG_SPLIT_ARGUMENTS__}
+   local SAVED_COLOR=${__SWF_LOG_WITH_COLOR__}
+   local SAVED_IMAGES=${__SWF_LOG_WITH_IMAGES__}
+   local SAVED_FORMAT=${__SWF_LOG_WITH_FORMAT__}
+   local SAVED_TIMESTAMP=${__SWF_LOG_WITH_TIMESTAMP__}
+   local SAVED_CODEPOINT=${__SWF_LOG_WITH_CODEPOINT__}
+
+   local split
+   local color
+   local images
+   local format
+   local timestamp
+   local codepoint
+   local index=0
+
+   for split in "${SPLIT_VALUES[@]}"; do
+      for color in "${COLOR_VALUES[@]}"; do
+         for images in "${IMAGE_VALUES[@]}"; do
+            for format in "${FORMAT_VALUES[@]}"; do
+               for timestamp in "${TIMESTAMP_VALUES[@]}"; do
+                  for codepoint in "${CODEPOINT_VALUES[@]}"; do
+                     __SWF_LOG_SPLIT_ARGUMENTS__=${split}
+                     __SWF_LOG_WITH_COLOR__=${color}
+                     __SWF_LOG_WITH_IMAGES__=${images}
+                     __SWF_LOG_WITH_FORMAT__=${format}
+                     __SWF_LOG_WITH_TIMESTAMP__=${timestamp}
+                     __SWF_LOG_WITH_CODEPOINT__=${codepoint}
+
+                     printf "\n"
+                     printf "log test #%02d: split=%s color=%s images=%s format=%s timestamp=%s codepoint=%s\n" \
+                        "${index}" \
+                        "${split}" \
+                        "${color}" \
+                        "${images}" \
+                        "${format}" \
+                        "${timestamp}" \
+                        "${codepoint}"
+
+                     log_trace "${TEST_MESSAGE[@]}"
+                     log_debug "${TEST_MESSAGE[@]}"
+                     log_info "${TEST_MESSAGE[@]}"
+                     log_notice "${TEST_MESSAGE[@]}"
+                     log_warning "${TEST_MESSAGE[@]}"
+                     log_error "${TEST_MESSAGE[@]}"
+                     log_critical "${TEST_MESSAGE[@]}"
+                     log_fatal "${TEST_MESSAGE[@]}"
+
+                     log_red "${TEST_MESSAGE[@]}"
+                     log_green "${TEST_MESSAGE[@]}"
+                     log_yellow "${TEST_MESSAGE[@]}"
+                     log_blue "${TEST_MESSAGE[@]}"
+                     log_magenta "${TEST_MESSAGE[@]}"
+                     log_cyan "${TEST_MESSAGE[@]}"
+                     log_lightred "${TEST_MESSAGE[@]}"
+                     log_lightgreen "${TEST_MESSAGE[@]}"
+                     log_lightyellow "${TEST_MESSAGE[@]}"
+                     log_lightblue "${TEST_MESSAGE[@]}"
+                     log_lightmagenta "${TEST_MESSAGE[@]}"
+                     log_lightcyan "${TEST_MESSAGE[@]}"
+                     log_black "${TEST_MESSAGE[@]}"
+                     log_darkgray "${TEST_MESSAGE[@]}"
+                     log_lightgray "${TEST_MESSAGE[@]}"
+                     log_white "${TEST_MESSAGE[@]}"
+
+                     (( ++index ))
+                  done
+               done
+            done
+         done
+      done
+   done
+
+   __SWF_LOG_SPLIT_ARGUMENTS__=${SAVED_SPLIT}
+   __SWF_LOG_WITH_COLOR__=${SAVED_COLOR}
+   __SWF_LOG_WITH_IMAGES__=${SAVED_IMAGES}
+   __SWF_LOG_WITH_FORMAT__=${SAVED_FORMAT}
+   __SWF_LOG_WITH_TIMESTAMP__=${SAVED_TIMESTAMP}
+   __SWF_LOG_WITH_CODEPOINT__=${SAVED_CODEPOINT}
+}
