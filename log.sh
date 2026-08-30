@@ -165,17 +165,27 @@ function __log__( )
    if [[ 0 -ne ${__SWF_LOG_WITH_CODEPOINT__} ]]; then
 
       local STACK_INDEX=0
+      local func=""
+      local src=""
+      local line=""
       # Here we skip functions in highest stack points, defined in the map.
       for(( STACK_INDEX = 1; STACK_INDEX < ${#FUNCNAME[@]}; ++STACK_INDEX )); do
          if [[ -n "${__SWF_LOG_SKIP_STACK_FUNCTIONS__[${FUNCNAME[$STACK_INDEX]}]}" ]]; then
             continue
          fi
 
-         local func="${FUNCNAME[${STACK_INDEX}]}"
-         local src="${BASH_SOURCE[${STACK_INDEX}]}"
-         local line="${BASH_LINENO[$(( ${STACK_INDEX} - 1 ))]}"
+         func="${FUNCNAME[${STACK_INDEX}]}"
+         src="${BASH_SOURCE[${STACK_INDEX}]}"
+         line="${BASH_LINENO[$(( ${STACK_INDEX} - 1 ))]}"
          break
       done
+
+      if [[ -z "${func}" ]]; then
+         local STACK_LAST_INDEX=$(( ${#BASH_SOURCE[@]} - 1 ))
+         func="main"
+         src="${BASH_SOURCE[${STACK_LAST_INDEX}]}"
+         line="${BASH_LINENO[${STACK_LAST_INDEX}]:-0}"
+      fi
 
       (( __SWF_LOG_WITH_COLOR__ )) && \
          COLOR="${ECHO_FG_LightYellow}" || COLOR=""
