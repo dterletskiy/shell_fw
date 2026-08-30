@@ -47,7 +47,7 @@ function log_disable_format( )
 __SWF_LOG_WITH_TIMESTAMP__=0
 function log_enable_timestamp( )
 {
-   __SWF_LOG_WITH_TIMESTAMP__=0
+   __SWF_LOG_WITH_TIMESTAMP__=1
 }
 function log_disable_timestamp( )
 {
