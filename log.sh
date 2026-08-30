@@ -4,12 +4,66 @@ source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/constants
 
 
 
-readonly __SWF_LOG_SPLIT_ARGUMENTS__=1
-readonly __SWF_LOG_WITH_COLOR__=1
-readonly __SWF_LOG_WITH_IMAGES__=0
-readonly __SWF_LOG_WITH_FORMAT__=0
-readonly __SWF_LOG_WITH_TIMESTAMP__=0
-readonly __SWF_LOG_WITH_CODEPOINT__=0
+__SWF_LOG_SPLIT_ARGUMENTS__=1
+function log_enable_split_arguments( )
+{
+   __SWF_LOG_SPLIT_ARGUMENTS__=1
+}
+function log_disable_split_arguments( )
+{
+   __SWF_LOG_SPLIT_ARGUMENTS__=0
+}
+
+__SWF_LOG_WITH_COLOR__=1
+function log_enable_color( )
+{
+   __SWF_LOG_WITH_COLOR__=1
+}
+function log_disable_color( )
+{
+   __SWF_LOG_WITH_COLOR__=0
+}
+
+__SWF_LOG_WITH_IMAGES__=0
+function log_enable_images( )
+{
+   __SWF_LOG_WITH_IMAGES__=1
+}
+function log_disable_images( )
+{
+   __SWF_LOG_WITH_IMAGES__=0
+}
+
+__SWF_LOG_WITH_FORMAT__=0
+function log_enable_format( )
+{
+   __SWF_LOG_WITH_FORMAT__=1
+}
+function log_disable_format( )
+{
+   __SWF_LOG_WITH_FORMAT__=0
+}
+
+__SWF_LOG_WITH_TIMESTAMP__=0
+function log_enable_timestamp( )
+{
+   __SWF_LOG_WITH_TIMESTAMP__=0
+}
+function log_disable_timestamp( )
+{
+   __SWF_LOG_WITH_TIMESTAMP__=0
+}
+
+__SWF_LOG_WITH_CODEPOINT__=0
+function log_enable_codepoint( )
+{
+   __SWF_LOG_WITH_CODEPOINT__=1
+}
+function log_disable_codepoint( )
+{
+   __SWF_LOG_WITH_CODEPOINT__=0
+}
+
 
 declare -A -g __SWF_LOG_SKIP_STACK_FUNCTIONS__=(
    [__log__]=1
@@ -136,7 +190,7 @@ function __log__( )
    (( __SWF_LOG_WITH_COLOR__ )) && \
       RESET_COLOR="${ECHO_RESET}" || RESET_COLOR=""
 
-   if [[ 0 -eq ${__SWF_SPLIT_ARGUMENTS__} ]]; then
+   if [[ 0 -eq ${__SWF_LOG_SPLIT_ARGUMENTS__} ]]; then
       # No split arguments
       printf "${COLOR}%s${RESET_COLOR}" ${LOCAL_MESSAGE[@]}
       printf "\n"
