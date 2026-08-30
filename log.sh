@@ -140,6 +140,8 @@ function __log__( )
 
    local LOCAL_FORMAT=$1
    local LOCAL_MESSAGE=("${!2}")
+   local COLOR=""
+   local RESET_COLOR=""
 
    if [[ 0 -ne ${__SWF_LOG_WITH_TIMESTAMP__} ]]; then
       (( __SWF_LOG_WITH_COLOR__ )) && \
