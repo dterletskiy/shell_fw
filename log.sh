@@ -65,7 +65,7 @@ function log_disable_codepoint( )
 }
 
 
-declare -A -g __SWF_LOG_SKIP_STACK_FUNCTIONS__=(
+declare -A -g -r __SWF_LOG_SKIP_STACK_FUNCTIONS__=(
    [__log__]=1
    [log_trace]=1
    [log_debug]=1
@@ -79,84 +79,82 @@ declare -A -g __SWF_LOG_SKIP_STACK_FUNCTIONS__=(
    [execute_arr]=1
 )
 
+declare -A -g -r __SWF_LOG_TRACE_TYPE_TO_COLOR__=(
+   [TRACE]=${ECHO_FG_Default}
+   [DEBUG]=${ECHO_FG_LightGray}
+   [INFO]=${ECHO_FG_Green}
+   [NOTICE]=${ECHO_FG_LightCyan}
+   [WARNING]=${ECHO_FG_Blue}
+   [ERROR]=${ECHO_FG_Red}
+   [CRITICAL]=${ECHO_FG_Magenta}
+   [FATAL]=${ECHO_FG_Default}${ECHO_BG_Red}
+
+   [RED]=${ECHO_FG_Red}
+   [GREEN]=${ECHO_FG_Green}
+   [YELLOW]=${ECHO_FG_Yellow}
+   [BLUE]=${ECHO_FG_Blue}
+   [MAGENTA]=${ECHO_FG_Magenta}
+   [CYAN]=${ECHO_FG_Cyan}
+
+   [LIGHTRED]=${ECHO_FG_LightRed}
+   [LIGHTGREEN]=${ECHO_FG_LightGreen}
+   [LIGHTYELLOW]=${ECHO_FG_LightYellow}
+   [LIGHTBLUE]=${ECHO_FG_LightBlue}
+   [LIGHTMAGENTA]=${ECHO_FG_LightMagenta}
+   [LIGHTCYAN]=${ECHO_FG_LightCyan}
+
+   [BLACK]=${ECHO_FG_Black}
+   [DARKGRAY]=${ECHO_FG_DarkGray}
+   [LIGHTGRAY]=${ECHO_FG_LightGray}
+   [WHITE]=${ECHO_FG_White}
+)
+
+declare -A -g -r __SWF_LOG_TRACE_TYPE_TO_IMAGE__=(
+   [TRACE]="📝"
+   [DEBUG]="🔧"
+   [INFO]="ℹ️ "
+   [NOTICE]="📌"
+   [WARNING]="⚠️ "
+   [ERROR]="❌"
+   [CRITICAL]="🚨"
+   [FATAL]="💀"
+)
+
+declare -A -g -r __SWF_LOG_TRACE_TYPE_TO_TEXT__=(
+   [TRACE]="TRACE"
+   [DEBUG]="DEBUG"
+   [INFO]="INFO"
+   [NOTICE]="NOTICE"
+   [WARNING]="WARNING"
+   [ERROR]="ERROR"
+   [CRITICAL]="CRITICAL"
+   [FATAL]="FATAL"
+
+   [RED]="UNDEFINED"
+   [GREEN]="UNDEFINED"
+   [YELLOW]="UNDEFINED"
+   [BLUE]="UNDEFINED"
+   [MAGENTA]="UNDEFINED"
+   [CYAN]="UNDEFINED"
+
+   [LIGHTRED]="UNDEFINED"
+   [LIGHTGREEN]="UNDEFINED"
+   [LIGHTYELLOW]="UNDEFINED"
+   [LIGHTBLUE]="UNDEFINED"
+   [LIGHTMAGENTA]="UNDEFINED"
+   [LIGHTCYAN]="UNDEFINED"
+
+   [BLACK]="UNDEFINED"
+   [DARKGRAY]="UNDEFINED"
+   [LIGHTGRAY]="UNDEFINED"
+   [WHITE]="UNDEFINED"
+)
+
 
 
 
 function __log__( )
 {
-   declare -A __TRACE_TYPE_TO_COLOR__=(
-      [TRACE]=${ECHO_FG_Default}
-      [DEBUG]=${ECHO_FG_LightGray}
-      [INFO]=${ECHO_FG_Green}
-      [NOTICE]=${ECHO_FG_LightCyan}
-      [WARNING]=${ECHO_FG_Blue}
-      [ERROR]=${ECHO_FG_Red}
-      [CRITICAL]=${ECHO_FG_Magenta}
-      [FATAL]=${ECHO_FG_Default}${ECHO_BG_Red}
-
-
-      [RED]=${ECHO_FG_Red}
-      [GREEN]=${ECHO_FG_Green}
-      [YELLOW]=${ECHO_FG_Yellow}
-      [BLUE]=${ECHO_FG_Blue}
-      [MAGENTA]=${ECHO_FG_Magenta}
-      [CYAN]=${ECHO_FG_Cyan}
-
-      [LIGHTRED]=${ECHO_FG_LightRed}
-      [LIGHTGREEN]=${ECHO_FG_LightGreen}
-      [LIGHTYELLOW]=${ECHO_FG_LightYellow}
-      [LIGHTBLUE]=${ECHO_FG_LightBlue}
-      [LIGHTMAGENTA]=${ECHO_FG_LightMagenta}
-      [LIGHTCYAN]=${ECHO_FG_LightCyan}
-
-      [BLACK]=${ECHO_FG_Black}
-      [DARKGRAY]=${ECHO_FG_DarkGray}
-      [LIGHTGRAY]=${ECHO_FG_LightGray}
-      [WHITE]=${ECHO_FG_White}
-   )
-
-   declare -A __TRACE_TYPE_TO_IMAGE__=(
-      [TRACE]="📝"
-      [DEBUG]="🔧"
-      [INFO]="ℹ️ "
-      [NOTICE]="📌"
-      [WARNING]="⚠️ "
-      [ERROR]="❌"
-      [CRITICAL]="🚨"
-      [FATAL]="💀"
-   )
-
-   declare -A __TRACE_TYPE_TO_TEXT__=(
-      [TRACE]="TRACE"
-      [DEBUG]="DEBUG"
-      [INFO]="INFO"
-      [NOTICE]="NOTICE"
-      [WARNING]="WARNING"
-      [ERROR]="ERROR"
-      [CRITICAL]="CRITICAL"
-      [FATAL]="FATAL"
-
-      [RED]="UNDEFINED"
-      [GREEN]="UNDEFINED"
-      [YELLOW]="UNDEFINED"
-      [BLUE]="UNDEFINED"
-      [MAGENTA]="UNDEFINED"
-      [CYAN]="UNDEFINED"
-
-      [LIGHTRED]="UNDEFINED"
-      [LIGHTGREEN]="UNDEFINED"
-      [LIGHTYELLOW]="UNDEFINED"
-      [LIGHTBLUE]="UNDEFINED"
-      [LIGHTMAGENTA]="UNDEFINED"
-      [LIGHTCYAN]="UNDEFINED"
-
-      [BLACK]="UNDEFINED"
-      [DARKGRAY]="UNDEFINED"
-      [LIGHTGRAY]="UNDEFINED"
-      [WHITE]="UNDEFINED"
-   )
-
-
    local LOCAL_FORMAT=$1
    local LOCAL_MESSAGE=("${!2}")
    local COLOR=""
@@ -171,16 +169,16 @@ function __log__( )
    fi
 
    if [[ 0 -ne ${__SWF_LOG_WITH_IMAGES__} ]]; then
-      local emoji="${__TRACE_TYPE_TO_IMAGE__[$LOCAL_FORMAT]}"
+      local emoji="${__SWF_LOG_TRACE_TYPE_TO_IMAGE__[$LOCAL_FORMAT]}"
       printf "%s%-4s" "$emoji" ""
    fi
 
    if [[ 0 -ne ${__SWF_LOG_WITH_FORMAT__} ]]; then
       (( __SWF_LOG_WITH_COLOR__ )) && \
-         COLOR="${__TRACE_TYPE_TO_COLOR__[$LOCAL_FORMAT]}" || COLOR=""
+         COLOR="${__SWF_LOG_TRACE_TYPE_TO_COLOR__[$LOCAL_FORMAT]}" || COLOR=""
       (( __SWF_LOG_WITH_COLOR__ )) && \
          RESET_COLOR="${ECHO_RESET}" || RESET_COLOR=""
-      printf "${COLOR}%-12s${RESET_COLOR}" "[${__TRACE_TYPE_TO_TEXT__[$LOCAL_FORMAT]}]"
+      printf "${COLOR}%-12s${RESET_COLOR}" "[${__SWF_LOG_TRACE_TYPE_TO_TEXT__[$LOCAL_FORMAT]}]"
    fi
 
    if [[ 0 -ne ${__SWF_LOG_WITH_CODEPOINT__} ]]; then
@@ -217,7 +215,7 @@ function __log__( )
    fi
 
    (( __SWF_LOG_WITH_COLOR__ )) && \
-      COLOR="${__TRACE_TYPE_TO_COLOR__[$LOCAL_FORMAT]}" || COLOR=""
+      COLOR="${__SWF_LOG_TRACE_TYPE_TO_COLOR__[$LOCAL_FORMAT]}" || COLOR=""
    (( __SWF_LOG_WITH_COLOR__ )) && \
       RESET_COLOR="${ECHO_RESET}" || RESET_COLOR=""
 
