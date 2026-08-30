@@ -192,7 +192,7 @@ function __log__( )
 
    if [[ 0 -eq ${__SWF_LOG_SPLIT_ARGUMENTS__} ]]; then
       # No split arguments
-      printf "${COLOR}%s${RESET_COLOR}" ${LOCAL_MESSAGE[@]}
+      printf "${COLOR}%s${RESET_COLOR}" "${LOCAL_MESSAGE[*]}"
       printf "\n"
    else
       # Split arguments
