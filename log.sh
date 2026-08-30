@@ -204,49 +204,49 @@ function __log__( )
 
 function log_trace( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ TRACE LOCAL_MESSAGE[@]
 }
 
 function log_debug( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ DEBUG LOCAL_MESSAGE[@]
 }
 
 function log_info( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ INFO LOCAL_MESSAGE[@]
 }
 
 function log_notice( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ NOTICE LOCAL_MESSAGE[@]
 }
 
 function log_warning( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ WARNING LOCAL_MESSAGE[@]
 }
 
 function log_error( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ ERROR LOCAL_MESSAGE[@]
 }
 
 function log_critical( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ CRITICAL LOCAL_MESSAGE[@]
 }
 
 function log_fatal( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ FATAL LOCAL_MESSAGE[@]
 }
 
@@ -254,97 +254,97 @@ function log_fatal( )
 
 function log_red( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ RED LOCAL_MESSAGE[@]
 }
 
 function log_green( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ GREEN LOCAL_MESSAGE[@]
 }
 
 function log_yellow( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ YELLOW LOCAL_MESSAGE[@]
 }
 
 function log_blue( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ BLUE LOCAL_MESSAGE[@]
 }
 
 function log_magenta( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ MAGENTA LOCAL_MESSAGE[@]
 }
 
 function log_cyan( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ CYAN LOCAL_MESSAGE[@]
 }
 
 function log_lightred( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ LIGHTRED LOCAL_MESSAGE[@]
 }
 
 function log_lightgreen( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ LIGHTGREEN LOCAL_MESSAGE[@]
 }
 
 function log_lightyellow( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ LIGHTYELLOW LOCAL_MESSAGE[@]
 }
 
 function log_lightblue( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ LIGHTBLUE LOCAL_MESSAGE[@]
 }
 
 function log_lightmagenta( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ LIGHTMAGENTA LOCAL_MESSAGE[@]
 }
 
 function log_lightcyan( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ LIGHTCYAN LOCAL_MESSAGE[@]
 }
 
 function log_black( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ BLACK LOCAL_MESSAGE[@]
 }
 
 function log_darkgray( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ DARKGRAY LOCAL_MESSAGE[@]
 }
 
 function log_lightgray( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ LIGHTGRAY LOCAL_MESSAGE[@]
 }
 
 function log_white( )
 {
-   local LOCAL_MESSAGE=$@
+   local LOCAL_MESSAGE=("$@")
    __log__ WHITE LOCAL_MESSAGE[@]
 }
 
