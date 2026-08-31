@@ -4,7 +4,7 @@ source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/constants
 
 
 
-__SWF_LOG_SPLIT_ARGUMENTS__=1
+__SWF_LOG_SPLIT_ARGUMENTS__=0
 function log_enable_split_arguments( )
 {
    __SWF_LOG_SPLIT_ARGUMENTS__=1
