@@ -130,6 +130,81 @@ function is_non_negative_number( )
 
 
 # Description:
+# 'add_numbers' adds two numeric values and prints the result.
+#
+# Parameters:
+# $1 - First number. May be an integer or a decimal value.
+# $2 - Second number. May be an integer or a decimal value.
+#
+# Behavior:
+# - Validates both arguments with 'is_number'.
+# - Uses 'bc' to add integer and decimal values.
+# - Uses the maximum fractional length of the input values as the output scale.
+# - Normalizes results such as '.5' and '-.5' to '0.5' and '-0.5'.
+# - Returns 1 and logs an error if the number of arguments is invalid, an
+#   argument is not numeric, or 'bc' is missing.
+#
+# Examples:
+# add_numbers 1 2
+# # 3
+#
+# add_numbers 1.2 3.4
+# # 4.6
+#
+# add_numbers -1.5 0.25
+# # -1.25
+#
+# add_numbers "$(get_pi_digits 100)" "$(get_e_digits 100)"
+# # 5.8598744820488384738229308546321653819544164930750653959419122200318930366397565931994170038672834953
+function add_numbers( )
+{
+   if [[ 2 -ne $# ]]; then
+      log_error "Usage: add_numbers <number> <number>"
+      return 1
+   fi
+
+   local left="${1}"
+   local right="${2}"
+
+   if ! is_number "${left}" || ! is_number "${right}"; then
+      log_error "Usage: add_numbers <number> <number>"
+      return 1
+   fi
+
+   if ! command -v bc &> /dev/null; then
+      log_error "'bc' is required"
+      return 1
+   fi
+
+   local left_fraction=""
+   local right_fraction=""
+
+   if [[ "${left}" == *.* ]]; then
+      left_fraction="${left#*.}"
+   fi
+   if [[ "${right}" == *.* ]]; then
+      right_fraction="${right#*.}"
+   fi
+
+   local scale=${#left_fraction}
+   if [[ ${scale} -lt ${#right_fraction} ]]; then
+      scale=${#right_fraction}
+   fi
+
+   local result="$( BC_LINE_LENGTH=0 bc <<< "scale=${scale}; ${left} + ${right}" )"
+
+   if [[ "${result}" == .* ]]; then
+      result="0${result}"
+   elif [[ "${result}" == -.* ]]; then
+      result="-0${result#-}"
+   fi
+
+   printf "%s\n" "${result}"
+}
+
+
+
+# Description:
 # 'get_pi_digits' prints pi with the requested number of digits after the
 # decimal point.
 #
