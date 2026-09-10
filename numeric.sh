@@ -129,6 +129,98 @@ function is_non_negative_number( )
 
 
 
+# Description:
+# 'get_pi_digits' prints pi with the requested number of digits after the
+# decimal point.
+#
+# Parameters:
+# $1 - Number of digits after the decimal point. Must be a non-negative integer.
+#
+# Behavior:
+# - Uses 'bc -l' to calculate pi as 4*a(1).
+# - Calculates with extra precision and then truncates the fractional part to
+#   the requested length.
+# - If the requested length is 0, prints only the integer part: 3.
+# - Returns 1 and logs an error if the argument is invalid or 'bc' is missing.
+#
+# Example:
+# get_pi_digits 5
+# # 3.14159
+function get_pi_digits( )
+{
+   local digits="${1}"
+
+   if ! is_non_negative_integer "${digits}"; then
+      log_error "Usage: get_pi_digits <non-negative-integer>"
+      return 1
+   fi
+
+   if ! command -v bc &> /dev/null; then
+      log_error "'bc' is required"
+      return 1
+   fi
+
+   local scale=$(( digits + 10 ))
+   local value="$( bc -l <<< "scale=${scale}; 4*a(1)" )"
+   local integer="${value%%.*}"
+
+   if [[ 0 -eq ${digits} ]]; then
+      printf "%s\n" "${integer}"
+      return 0
+   fi
+
+   local fraction="${value#*.}"
+   printf "%s.%s\n" "${integer}" "${fraction:0:${digits}}"
+}
+
+
+
+# Description:
+# 'get_e_digits' prints Euler's number with the requested number of digits
+# after the decimal point.
+#
+# Parameters:
+# $1 - Number of digits after the decimal point. Must be a non-negative integer.
+#
+# Behavior:
+# - Uses 'bc -l' to calculate Euler's number as e(1).
+# - Calculates with extra precision and then truncates the fractional part to
+#   the requested length.
+# - If the requested length is 0, prints only the integer part: 2.
+# - Returns 1 and logs an error if the argument is invalid or 'bc' is missing.
+#
+# Example:
+# get_e_digits 5
+# # 2.71828
+function get_e_digits( )
+{
+   local digits="${1}"
+
+   if ! is_non_negative_integer "${digits}"; then
+      log_error "Usage: get_e_digits <non-negative-integer>"
+      return 1
+   fi
+
+   if ! command -v bc &> /dev/null; then
+      log_error "'bc' is required"
+      return 1
+   fi
+
+   local scale=$(( digits + 10 ))
+   local value="$( bc -l <<< "scale=${scale}; e(1)" )"
+   local integer="${value%%.*}"
+
+   if [[ 0 -eq ${digits} ]]; then
+      printf "%s\n" "${integer}"
+      return 0
+   fi
+
+   local fraction="${value#*.}"
+   printf "%s.%s\n" "${integer}" "${fraction:0:${digits}}"
+}
+
+
+
 function __test_numeric__( )
 {
    declare -a VALUES=( 1 0 -0 -1 1.0 0.0 -0.0 -1.0 )
