@@ -161,7 +161,7 @@ function get_pi_digits( )
    fi
 
    local scale=$(( digits + 10 ))
-   local value="$( bc -l <<< "scale=${scale}; 4*a(1)" )"
+   local value="$( BC_LINE_LENGTH=0 bc -l <<< "scale=${scale}; 4*a(1)" )"
    local integer="${value%%.*}"
 
    if [[ 0 -eq ${digits} ]]; then
@@ -207,7 +207,7 @@ function get_e_digits( )
    fi
 
    local scale=$(( digits + 10 ))
-   local value="$( bc -l <<< "scale=${scale}; e(1)" )"
+   local value="$( BC_LINE_LENGTH=0 bc -l <<< "scale=${scale}; e(1)" )"
    local integer="${value%%.*}"
 
    if [[ 0 -eq ${digits} ]]; then
