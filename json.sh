@@ -203,10 +203,11 @@ function json_test_type( )
 # Uses jq to safely extract a value from nested JSON structures
 # (objects and arrays) using a variable-length path.
 #
-# The output depends on the JSON value type:
-#   - scalar values are stored in a scalar variable;
-#   - objects are stored as compact JSON strings;
-#   - arrays are stored in an indexed Bash array.
+# The output depends on the JSON value type at the requested path:
+#   - scalar values are stored in a scalar variable in raw jq -r form;
+#   - objects are stored in a scalar variable as compact JSON strings;
+#   - arrays are stored in an indexed Bash array, one compact JSON element
+#     per Bash array item.
 #
 # Arguments:
 #   $1  - JSON string
@@ -215,9 +216,15 @@ function json_test_type( )
 #
 # Return codes:
 #   0   - success
-#   1   - path not found or jq evaluation failed
-#   2   - invalid JSON (basic validation failed)
-#   3   - output variable type does not match JSON value type
+#   1   - invalid JSON (basic validation failed)
+#   2   - path not found, invalid path, or failed to detect target type
+#   3   - array value requested, but output variable is not an array
+#   4   - failed to read array elements
+#   5   - object value requested, but output variable is an array
+#   6   - failed to read object value
+#   7   - target value is null
+#   8   - scalar value requested, but output variable is an array
+#   9   - failed to read scalar value
 #   127 - required utility (jq) is not available
 #
 # Notes:
@@ -226,7 +233,13 @@ function json_test_type( )
 #   - String path elements are treated as object keys.
 #   - JSON arrays require the output variable to be declared with
 #     'declare -a'.
+#   - The JSON type is detected at the requested path, not at the root of
+#     the document.
+#   - JSON strings, numbers, and booleans are returned as raw scalar values.
+#     For example, a JSON string "debug" is returned as debug, and JSON false
+#     is returned as false.
 #   - JSON objects are returned as compact JSON strings.
+#   - JSON array elements are returned in compact JSON form.
 #   - Performs only a simple JSON sanity check.
 #
 # Example:
@@ -261,7 +274,7 @@ function json_get_value( )
    done
 
    local json_type
-   json_get_type "${json}" json_type || return 2
+   json_get_type "${json}" json_type "$@" || return 2
 
    local decl
    get_variable_type "${out_name}" decl
@@ -301,7 +314,7 @@ function json_get_value( )
             return 8
          fi
          out_ref=""
-         out_ref=$( jq -e -r "$jq_expr" <<< "$json" 2> /dev/null ) || return 9
+         out_ref=$( jq -r "$jq_expr" <<< "$json" 2> /dev/null ) || return 9
       ;;
 
    esac

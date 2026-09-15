@@ -655,6 +655,8 @@ function validate_parameters( )
 # If neither an explicitly defined value nor a default value exists, the
 # function returns an error.
 #
+# String values are returned as plain shell strings, not as JSON-quoted strings.
+#
 # Parameters:
 #   --registry=<name>
 #      Name of the registry variable.
@@ -723,6 +725,9 @@ Notes:
 
    • If neither a defined value nor a default value exists, the function
      returns an error.
+
+   • String values are returned as plain shell strings, not as JSON-quoted
+     strings.
 
 Return values:
    0   Success.
