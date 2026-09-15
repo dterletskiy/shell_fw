@@ -1,16 +1,59 @@
+#!/bin/bash
+
 [ -n "${__SFW__INIT__}" ] && return 0 || readonly __SFW__INIT__=1
 
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/log.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/types.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/print.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/time.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/range.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/array.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/file.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/ui.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/numeric.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/parameters.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/cpu.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/json.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/drive.sh"
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/device_tree.sh"
+function __init_shell_fw__( )
+{
+   local -n __init_shell_fw__FILES=${1}
+   local LOCAL_SCRIPT_DIR=${2}
+
+   local FILE
+   for FILE in "${__init_shell_fw__FILES[@]}"; do
+      if [ -f "${LOCAL_SCRIPT_DIR}/${FILE}" ]; then
+         . "${LOCAL_SCRIPT_DIR}/${FILE}"
+      else
+         echo "[WARNING] can't source '${LOCAL_SCRIPT_DIR}/${FILE}'"
+      fi
+   done
+}
+
+
+declare -a FILES=(
+      "log.sh"
+      "types.sh"
+      "print.sh"
+      "time.sh"
+      "range.sh"
+      "array.sh"
+      "file.sh"
+      "ui.sh"
+      "numeric.sh"
+      "parameters.sh"
+      "cpu.sh"
+      "json.sh"
+      "drive.sh"
+      "device_tree.sh"
+   )
+
+for option in "${@}"; do
+   case ${option} in
+      sfw-arg_pars)
+         FILES+=( "arg_pars.sh" )
+      ;;
+      sfw-arg_pars_jq)
+         FILES+=( "arg_pars_jq.sh" )
+      ;;
+      sfw-arg_pars_functions)
+         FILES+=( "arg_pars_functions.sh" )
+      ;;
+      *)
+         echo "[ERROR] undefined option: '${option}'"
+      ;;
+   esac
+done
+
+__init_shell_fw__ \
+   FILES \
+   "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+unset FILES
+unset __init_shell_fw__
