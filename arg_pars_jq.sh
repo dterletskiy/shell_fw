@@ -184,10 +184,13 @@ function register_argument( )
       "arguments" "${CMD_NAME}" "name"  \
       || return $?
 
-   json_set_value "${CMD_REGISTRY_ra_ref}" CMD_REGISTRY_ra_ref \
-      "${CMD_REQUIRED}" \
-      "arguments" "${CMD_NAME}" "required"  \
-      || return $?
+   local jq_expr
+   __json_build_jq_expr__ jq_expr \
+      "arguments" "${CMD_NAME}" "required"
+
+   CMD_REGISTRY_ra_ref=$(
+         jq -e "${jq_expr} = ${CMD_REQUIRED}" <<< "${CMD_REGISTRY_ra_ref}" 2> /dev/null
+      ) || return $?
 
    if [[ ! -z "${CMD_ALLOWED_VALUES}" ]]; then
       local -a allowed_values=( )
@@ -606,9 +609,9 @@ function validate_parameters( )
       # If value is not passed for required argument error occures.
       # If passed value is not present in the allowed list values arror occures.
       local -a defined_values=( )
-      if ! json_get_value "${arguments_object}" defined_values "${name}" "values" "defined"; then
+      if ! json_get_array "${arguments_object}" defined_values "${name}" "values" "defined"; then
          local required
-         json_get_value "${arguments_object}" required "${name}" "required"
+         json_get_boolean "${arguments_object}" required "${name}" "required"
          if [[ "true" == "${required}" ]]; then
             log_error "Required argument '--${name}' was not passed"
             validate_parameters_help
@@ -616,7 +619,7 @@ function validate_parameters( )
          fi
       else
          local -a allowed_values=( )
-         if json_get_value "${arguments_object}" allowed_values "${name}" "values" "allowed"; then
+         if json_get_array "${arguments_object}" allowed_values "${name}" "values" "allowed"; then
             if [[ ${#allowed_values[@]} -gt 0 ]]; then
                for defined_value in "${defined_values[@]}"; do
                   if ! array_test_element allowed_values "${defined_value}"; then
