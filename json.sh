@@ -634,7 +634,7 @@ function json_get_boolean( )
    local jq_expr
    __json_build_jq_expr__ jq_expr "$@"
 
-   out_ref=$( jq -e -r "$jq_expr" <<< "$json" 2> /dev/null ) || return 4
+   out_ref=$( jq -r "$jq_expr" <<< "$json" 2> /dev/null ) || return 4
 
    return 0
 }

@@ -344,10 +344,13 @@ function register_option( )
       "options" "${CMD_NAME}" "name"  \
       || return $?
 
-   json_set_value "${CMD_REGISTRY_ro_ref}" CMD_REGISTRY_ro_ref \
-      "false" \
-      "options" "${CMD_NAME}" "defined"  \
-      || return $?
+   local jq_expr
+   __json_build_jq_expr__ jq_expr \
+      "options" "${CMD_NAME}" "defined"
+
+   CMD_REGISTRY_ro_ref=$(
+         jq -e "${jq_expr} = false" <<< "${CMD_REGISTRY_ro_ref}" 2> /dev/null
+      ) || return $?
 
    return 0
 }
@@ -491,9 +494,13 @@ function parse_parameters( )
 
       # Update parameter value
       if [[ "options" == "${parameter_type}" ]]; then
-         json_set_value "${__parse_parameters_parameters__}" __parse_parameters_parameters__ \
-            "true" \
-            "options" "${parameter_name}" "defined" || return 3
+         local jq_expr
+         __json_build_jq_expr__ jq_expr \
+            "options" "${parameter_name}" "defined"
+
+         __parse_parameters_parameters__=$(
+               jq -e "${jq_expr} = true" <<< "${__parse_parameters_parameters__}" 2> /dev/null
+            ) || return 3
       elif [[ "arguments" == "${parameter_type}" ]]; then
          local -a defined_values=( )
          IFS=',' read -ra defined_values <<< "${parameter_value}"
@@ -968,8 +975,8 @@ function get_option( )
 
 
 
-   json_get_value "${CMD_REGISTRY_go_ref}" \
-      CMD_RESULT_go_ref "options" "${CMD_NAME}" "defined" \
+   json_get_boolean "${CMD_REGISTRY_go_ref}" \
+      "${CMD_RESULT_NAME}" "options" "${CMD_NAME}" "defined" \
       || return 8
 
    return 0
