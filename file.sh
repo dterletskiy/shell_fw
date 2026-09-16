@@ -110,14 +110,6 @@ function find_extensions_in_dir( )
    )
 }
 
-
-
-# Deprecated compatibility wrapper. Use find_extensions_in_dir.
-function find_extentions_in_dir( )
-{
-   find_extensions_in_dir "${@}"
-}
-
 #
 # Get the names of all subdirectories located directly inside a specified
 # directory.
