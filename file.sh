@@ -4,32 +4,59 @@ source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/log.sh"
 
 
 
-# 'get_current_dir' - return the full path to the current location
+#
+# Print the current working directory.
+#
+# Output:
+#   Absolute or shell-current value of PWD.
+#
+# Notes:
+#   - This function prints the value of the PWD shell variable.
+#
 function get_current_dir( )
 {
-   # echo $(cd -P -- "$(dirname -- "$0")" && pwd -P)
-   # echo $( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
    echo ${PWD}
 }
 
-# 'get_current_dir_name' - return the current location directory name
+
+
+#
+# Print the basename of the current working directory.
+#
+# Output:
+#   Last path component of PWD.
+#
 function get_current_dir_name( )
 {
    echo ${PWD##*/}
 }
 
-# 'get_current_script_dir' - returns the name of called script file
+
+
+#
+# Print the name of the invoked script.
+#
+# Output:
+#   Basename of $0, resolving one symlink level when $0 itself is a symlink.
+#
 function get_current_script_name( )
 {
-   # https://stackoverflow.com/a/192337
    echo $(basename "$(test -L "$0" && readlink "$0" || echo "$0")")
 }
 
-# 'get_current_script_dir' - returns directory where called script file is placed
+
+
+#
+# Print the directory of the invoked script.
+#
+# Output:
+#   Physical directory path containing the invoked script.
+#
+# Notes:
+#   - Symlinks in the script path are resolved before the directory is printed.
+#
 function get_current_script_dir( )
 {
-   # echo $( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-
    local source="${BASH_SOURCE[-1]}"
 
    while [ -h "$source" ]
@@ -44,14 +71,15 @@ function get_current_script_dir( )
    echo "$dir"
 }
 
-# Recursively searches for files with the requested extensions.
+#
+# Recursively find files with the requested extensions.
 #
 # Parameters:
 #   $1 - Directory to search in.
 #   $2 - Name of an array containing extensions without the leading dot.
 #   $3 - Name of an array that will receive matching file paths.
 #
-# Returns:
+# Return values:
 #   0 - Success.
 #   1 - Invalid arguments, invalid directory, or empty extension list.
 #
@@ -110,9 +138,7 @@ function find_extensions_in_dir( )
    )
 }
 
-#
-# Get the names of all subdirectories located directly inside a specified
-# directory.
+# Get direct visible subdirectory names.
 #
 # Parameters:
 #    $1 - Path to the directory to scan.
