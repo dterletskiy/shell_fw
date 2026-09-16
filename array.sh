@@ -32,10 +32,10 @@ source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/print.sh"
 #   printf '%s\n' "${my_array[@]}"
 function array_add_element( )
 {
+   [[ $# -lt 2 ]] && return 1
+
    local -n arr__array_add_element=$1
    local elem=$2
-
-   [[ $# -lt 2 ]] && return 1
 
    arr__array_add_element+=( "$elem" )
 }
@@ -59,7 +59,9 @@ function array_add_element( )
 #   - Preserves the order of remaining elements
 #   - Performs a single-pass O(n) iteration over the array
 #   - Compacts the array in-place without full reallocation
-#   - Truncates leftover elements at the end of the array
+#   - Re-indexes remaining elements into a dense zero-based array
+#   - Removes stale leftover elements from the original array
+#   - Returns 1 if fewer than 2 arguments are provided
 #
 # Performance:
 #   - Time complexity: O(n)
@@ -80,22 +82,28 @@ function array_add_element( )
 #   # d
 function array_remove_element( )
 {
+   [[ $# -lt 2 ]] && return 1
+
    local -n arr__array_test_element=$1
    local elem=$2
 
+   local -a indices=( "${!arr__array_test_element[@]}" )
    local i write
 
    write=0
 
-   for i in "${!arr__array_test_element[@]}"; do
+   for i in "${indices[@]}"; do
       if [[ "${arr__array_test_element[i]}" != "$elem" ]]; then
          arr__array_test_element[write]="${arr__array_test_element[i]}"
          ((write++))
       fi
    done
 
-   # truncate remaining tail
-   unset 'arr__array_test_element[@]:write'
+   for i in "${indices[@]}"; do
+      if (( i >= write )); then
+         unset 'arr__array_test_element[i]'
+      fi
+   done
 }
 
 
@@ -118,7 +126,7 @@ function array_remove_element( )
 #
 # Return values:
 #   0 - Element found in the array
-#   1 - Element not found
+#   1 - Element not found or fewer than 2 arguments were provided
 #
 # Complexity:
 #   - Time complexity: O(n)
@@ -139,6 +147,8 @@ function array_remove_element( )
 #   fi
 function array_test_element( )
 {
+   [[ $# -lt 2 ]] && return 1
+
    local -n list__array_test_element=$1
    local item=$2
 
@@ -173,7 +183,7 @@ function array_test_element( )
 #
 # Return values:
 #   0 - Key exists in the associative array
-#   1 - Key does not exist
+#   1 - Key does not exist or fewer than 2 arguments were provided
 #
 # Complexity:
 #   - Time complexity: O(1)
@@ -197,6 +207,8 @@ function array_test_element( )
 #   fi
 function map_test_key( )
 {
+   [[ $# -lt 2 ]] && return 1
+
    local -n map__map_test_key=$1
    local key=$2
 
@@ -225,7 +237,8 @@ function map_test_key( )
 #
 # Return values:
 #   0 - Key exists and its value is not an empty string
-#   1 - Key does not exist or its value is empty
+#   1 - Key does not exist, its value is empty, or fewer than 2 arguments
+#       were provided
 #
 # Complexity:
 #   - Time complexity: O(1)
@@ -252,6 +265,8 @@ function map_test_key( )
 #   fi
 function map_test_key_not_empty( )
 {
+   [[ $# -lt 2 ]] && return 1
+
    local -n map__map_test_key_not_empty=$1
    local key=$2
 
@@ -282,7 +297,7 @@ function map_test_key_not_empty( )
 #
 # Return values:
 #   0 - At least one key with the specified value was found
-#   1 - No matching values were found
+#   1 - No matching values were found or fewer than 3 arguments were provided
 #
 # Complexity:
 #   - Time complexity: O(n)
@@ -312,6 +327,8 @@ function map_test_key_not_empty( )
 #   c
 function map_test_value( )
 {
+   [[ $# -lt 3 ]] && return 1
+
    local -n map__map_test_value=$1
    local value=$2
    local -n out_keys__map_test_value=$3
@@ -333,11 +350,11 @@ function map_test_value( )
 
 # copy_map( )
 #
-# Copies all key-value pairs from one associative array to another.
+# Copies all key-value pairs from one associative array into another.
 #
-# This function performs a shallow copy of an associative array using
-# namerefs. Each key-value pair from the source map is duplicated into
-# the destination map.
+# This function performs a shallow overlay copy of an associative array using
+# namerefs. Each key-value pair from the source map is duplicated into the
+# destination map.
 #
 # Parameters:
 #   $1 - Name of the destination associative array (passed by reference)
@@ -347,10 +364,15 @@ function map_test_value( )
 #   - Iterates over all keys in the source map
 #   - Copies each key and its associated value into the destination map
 #   - Overwrites existing keys in the destination if they already exist
+#   - Keeps destination keys that are not present in the source map
 #   - Does not modify the source map
+#   - Returns 1 if fewer than 2 arguments are provided
 #
 # Notes:
 #   - This is a shallow copy (values are copied, not references)
+#   - This is not an exact replacement of the destination map. Clear the
+#     destination before calling copy_map if old destination-only keys must be
+#     removed.
 #   - Requires Bash 4.3+ (nameref support via local -n)
 #   - Order of iteration is not guaranteed (associative array behavior)
 #
@@ -372,6 +394,8 @@ function map_test_value( )
 #   printf '%s\n' "${dst[@]}"
 function copy_map( )
 {
+   [[ $# -lt 2 ]] && return 1
+
    local -n copy_map__dst=$1
    local -n copy_map__src=$2
 
