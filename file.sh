@@ -44,32 +44,78 @@ function get_current_script_dir( )
    echo "$dir"
 }
 
-# This function recurcively searches all files in given directory with given
-# extentiones.
+# Recursively searches for files with the requested extensions.
+#
+# Parameters:
+#   $1 - Directory to search in.
+#   $2 - Name of an array containing extensions without the leading dot.
+#   $3 - Name of an array that will receive matching file paths.
+#
+# Returns:
+#   0 - Success.
+#   1 - Invalid arguments, invalid directory, or empty extension list.
+#
+# Notes:
+#   - Paths and file names containing spaces are preserved.
+#   - Extension values are matched literally, not as regular expressions.
+#   - The result array is appended to and is not cleared by this function.
+#
 # Example:
-#     declare -a FILE_LIST=()
-#     declare -a EXTENTIONS=( "c" "cpp" "cxx" )
-#     find_extentions_in_dir /home EXTENTIONS FILE_LIST
-#     echo "FILE_LIST: " ${FILE_LIST[@]}
-#     echo "FILE_LIST size: " ${#FILE_LIST[@]}
-function find_extentions_in_dir( )
+#   declare -a FILE_LIST=()
+#   declare -a EXTENSIONS=( "c" "cpp" "cxx" )
+#   find_extensions_in_dir /home EXTENSIONS FILE_LIST
+#   printf '%s\n' "${FILE_LIST[@]}"
+function find_extensions_in_dir( )
 {
+   if (( $# != 3 )); then
+      log_error "Usage: find_extensions_in_dir <directory> <extensions> <result>"
+      return 1
+   fi
+
    local LOCAL_SEARCH_DIR=${1}
-   local -n LOCAL_EXTENTIONS=${2}
+   local -n LOCAL_EXTENSIONS=${2}
    local -n LOCAL_FILE_LIST=${3}
 
-   local LOCAL_PATTERN=""
-   for LOCAL_EXTENTION in ${LOCAL_EXTENTIONS[@]} ; do
-      LOCAL_PATTERN+="${LOCAL_EXTENTION}|"
-   done
-   LOCAL_PATTERN=${LOCAL_PATTERN::-1}
+   if [[ ! -d "${LOCAL_SEARCH_DIR}" ]]; then
+      log_error "'${LOCAL_SEARCH_DIR}' is not a directory"
+      return 1
+   fi
 
-   local -a LOCAL_RESULT_LIST=()
-   local LOCAL_RESULT_LIST=$( find ${LOCAL_SEARCH_DIR} -regextype posix-extended -regex ".*\.(${LOCAL_PATTERN})" )
+   if (( ${#LOCAL_EXTENSIONS[@]} == 0 )); then
+      log_error "extension list is empty"
+      return 1
+   fi
 
-   for LOCAL_RESULT_ITEM in ${LOCAL_RESULT_LIST[@]} ; do
-      LOCAL_FILE_LIST+=( ${LOCAL_RESULT_ITEM} )
+   local -a LOCAL_FIND_EXPRESSION=( )
+   local LOCAL_EXTENSION
+   for LOCAL_EXTENSION in "${LOCAL_EXTENSIONS[@]}" ; do
+      [[ -n "${LOCAL_EXTENSION}" ]] || continue
+      LOCAL_FIND_EXPRESSION+=( -name "*.${LOCAL_EXTENSION}" -o )
    done
+
+   if (( ${#LOCAL_FIND_EXPRESSION[@]} == 0 )); then
+      log_error "extension list is empty"
+      return 1
+   fi
+   unset 'LOCAL_FIND_EXPRESSION[-1]'
+
+   local LOCAL_RESULT_ITEM
+   while IFS= read -r -d '' LOCAL_RESULT_ITEM; do
+      LOCAL_FILE_LIST+=( "${LOCAL_RESULT_ITEM}" )
+   done < <(
+      find "${LOCAL_SEARCH_DIR}" \
+         -type f \
+         \( "${LOCAL_FIND_EXPRESSION[@]}" \) \
+         -print0
+   )
+}
+
+
+
+# Deprecated compatibility wrapper. Use find_extensions_in_dir.
+function find_extentions_in_dir( )
+{
+   find_extensions_in_dir "${@}"
 }
 
 #
