@@ -8,7 +8,7 @@ function is_positive_integer( )
 {
    local value="$1"
 
-   [[ "$value" =~ ^[1-9][0-9]*$ ]]
+   [[ "$value" =~ ^\+?[1-9][0-9]*$ ]]
 }
 
 function is_negative_integer( )
@@ -22,7 +22,7 @@ function is_integer( )
 {
    local value="$1"
 
-   [[ "$value" =~ ^-?[0-9]+$ ]]
+   [[ "$value" =~ ^[+-]?[0-9]+$ ]]
 }
 
 function is_non_positive_integer( )
@@ -36,15 +36,15 @@ function is_non_negative_integer( )
 {
    local value="$1"
 
-   is_integer "${value}" && ! is_negative_integer "${value}"
+   is_integer "${value}" && [[ ! "${value}" =~ ^- ]]
 }
 
 function is_positive_float( )
 {
    local value="$1"
 
-   [[ "${value}" =~ ^[0-9]+\.[0-9]+$ ]] && \
-      [[ ! "${value}" =~ ^0+\.0+$ ]] && \
+   [[ "${value}" =~ ^\+?(([0-9]+\.[0-9]*)|(\.[0-9]+))$ ]] && \
+      [[ ! "${value}" =~ ^\+?0*\.?0*$ ]] && \
          return 0 || \
             return 1
 }
@@ -53,8 +53,8 @@ function is_negative_float( )
 {
    local value="$1"
 
-   [[ "${value}" =~ ^-[0-9]+\.[0-9]+$ ]] && \
-      [[ ! "${value}" =~ ^-0+\.0+$ ]] && \
+   [[ "${value}" =~ ^-(([0-9]+\.[0-9]*)|(\.[0-9]+))$ ]] && \
+      [[ ! "${value}" =~ ^-0*\.?0*$ ]] && \
          return 0 || \
             return 1
 }
@@ -63,7 +63,7 @@ function is_float( )
 {
    local value="$1"
 
-   [[ "$value" =~ ^-?[0-9]+\.[0-9]+$ ]]
+   [[ "$value" =~ ^[+-]?(([0-9]+\.[0-9]*)|(\.[0-9]+))$ ]]
 }
 
 function is_non_positive_float( )
@@ -77,7 +77,7 @@ function is_non_negative_float( )
 {
    local value="$1"
 
-   is_float "${value}" && ! is_negative_float "${value}"
+   is_float "${value}" && [[ ! "${value}" =~ ^- ]]
 }
 
 function is_positive_number( )
@@ -141,8 +141,10 @@ function is_non_negative_number( )
 # - Uses 'bc' to add integer and decimal values.
 # - Uses the maximum fractional length of the input values as the output scale.
 # - Normalizes results such as '.5' and '-.5' to '0.5' and '-0.5'.
+# - Accepts signed integers and decimal values such as '+1', '.5', '-.5',
+#   '1.', and '-1.25'.
 # - Returns 1 and logs an error if the number of arguments is invalid, an
-#   argument is not numeric, or 'bc' is missing.
+#   argument is not numeric, 'bc' is missing, or the calculation fails.
 #
 # Examples:
 # add_numbers 1 2
@@ -191,7 +193,14 @@ function add_numbers( )
       scale=${#right_fraction}
    fi
 
-   local result="$( BC_LINE_LENGTH=0 bc <<< "scale=${scale}; ${left} + ${right}" )"
+   local result
+   local bc_left="${left#+}"
+   local bc_right="${right#+}"
+
+   if ! result="$( BC_LINE_LENGTH=0 bc <<< "scale=${scale}; ${bc_left} + ${bc_right}" 2> /dev/null )"; then
+      log_error "'bc' calculation failed"
+      return 1
+   fi
 
    if [[ "${result}" == .* ]]; then
       result="0${result}"
@@ -216,13 +225,19 @@ function add_numbers( )
 # - Calculates with extra precision and then truncates the fractional part to
 #   the requested length.
 # - If the requested length is 0, prints only the integer part: 3.
-# - Returns 1 and logs an error if the argument is invalid or 'bc' is missing.
+# - Returns 1 and logs an error if the number of arguments is invalid, the
+#   argument is invalid, 'bc' is missing, or the calculation fails.
 #
 # Example:
 # get_pi_digits 5
 # # 3.14159
 function get_pi_digits( )
 {
+   if [[ 1 -ne $# ]]; then
+      log_error "Usage: get_pi_digits <non-negative-integer>"
+      return 1
+   fi
+
    local digits="${1}"
 
    if ! is_non_negative_integer "${digits}"; then
@@ -236,7 +251,11 @@ function get_pi_digits( )
    fi
 
    local scale=$(( digits + 10 ))
-   local value="$( BC_LINE_LENGTH=0 bc -l <<< "scale=${scale}; 4*a(1)" )"
+   local value
+   if ! value="$( BC_LINE_LENGTH=0 bc -l <<< "scale=${scale}; 4*a(1)" 2> /dev/null )"; then
+      log_error "'bc' calculation failed"
+      return 1
+   fi
    local integer="${value%%.*}"
 
    if [[ 0 -eq ${digits} ]]; then
@@ -262,13 +281,19 @@ function get_pi_digits( )
 # - Calculates with extra precision and then truncates the fractional part to
 #   the requested length.
 # - If the requested length is 0, prints only the integer part: 2.
-# - Returns 1 and logs an error if the argument is invalid or 'bc' is missing.
+# - Returns 1 and logs an error if the number of arguments is invalid, the
+#   argument is invalid, 'bc' is missing, or the calculation fails.
 #
 # Example:
 # get_e_digits 5
 # # 2.71828
 function get_e_digits( )
 {
+   if [[ 1 -ne $# ]]; then
+      log_error "Usage: get_e_digits <non-negative-integer>"
+      return 1
+   fi
+
    local digits="${1}"
 
    if ! is_non_negative_integer "${digits}"; then
@@ -282,7 +307,11 @@ function get_e_digits( )
    fi
 
    local scale=$(( digits + 10 ))
-   local value="$( BC_LINE_LENGTH=0 bc -l <<< "scale=${scale}; e(1)" )"
+   local value
+   if ! value="$( BC_LINE_LENGTH=0 bc -l <<< "scale=${scale}; e(1)" 2> /dev/null )"; then
+      log_error "'bc' calculation failed"
+      return 1
+   fi
    local integer="${value%%.*}"
 
    if [[ 0 -eq ${digits} ]]; then
