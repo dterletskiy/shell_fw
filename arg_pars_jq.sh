@@ -657,7 +657,7 @@ function validate_parameters( )
          json_get_boolean "${arguments_object}" required "${name}" "required"
          if [[ "true" == "${required}" ]]; then
             log_error "Required argument '--${name}' was not passed"
-            validate_parameters_help
+            # validate_parameters_help
             return 2
          fi
       else
@@ -667,7 +667,7 @@ function validate_parameters( )
                for defined_value in "${defined_values[@]}"; do
                   if ! array_test_element allowed_values "${defined_value}"; then
                      log_error "Passed value '${defined_value}' for parameter '${name}' is not allowed"
-                     validate_parameters_help
+                     # validate_parameters_help
                      return 3
                   fi
                done
