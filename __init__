@@ -47,7 +47,8 @@ for option in "${@}"; do
          FILES+=( "arg_pars_functions.sh" )
       ;;
       *)
-         echo "[ERROR] undefined option: '${option}'"
+         :
+         # echo "[ERROR] undefined option: '${option}'"
       ;;
    esac
 done
