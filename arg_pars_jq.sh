@@ -26,6 +26,7 @@ function __test_parameter_name__( )
 #
 # Supported properties:
 #   - argument name;
+#   - human-readable argument description;
 #   - required/optional flag;
 #   - list of allowed values;
 #   - list of default values for optional arguments.
@@ -47,6 +48,9 @@ function __test_parameter_name__( )
 #
 #   --required
 #      Mark the argument as required.
+#
+#   --note=<text>
+#      Human-readable description of the argument.
 #
 #   --allowed_values=<v1,v2,...>
 #      Comma-separated list of allowed argument values.
@@ -76,6 +80,7 @@ Usage:
       --registry=<registry>
       --name=<argument_name>
       [--required]
+      [--note=<text>]
       [--allowed_values=<value1,value2,...>]
       [--default_values=<value1,value2,...>]
 
@@ -92,6 +97,12 @@ Options:
 
    --required
       Mark the argument as required.
+
+   --note=<text>
+      Human-readable description of the argument.
+
+      The text is stored in the registry metadata and is not interpreted by
+      the parser.
 
    --allowed_values=<value1,value2,...>
       Comma-separated list of allowed values.
@@ -128,6 +139,7 @@ function register_argument( )
    local CMD_DEFAULT_VALUES=""
    local CMD_ALLOWED_VALUES=""
    local CMD_REQUIRED="false"
+   local CMD_NOTE=""
    for option in "${@}"; do
       case ${option} in
          --registry=*)
@@ -141,6 +153,9 @@ function register_argument( )
          ;;
          --allowed_values=*)
             CMD_ALLOWED_VALUES="${option#*=}"
+         ;;
+         --note=*)
+            CMD_NOTE="${option#*=}"
          ;;
          --required)
             CMD_REQUIRED="true"
@@ -191,6 +206,13 @@ function register_argument( )
    CMD_REGISTRY_ra_ref=$(
          jq -e "${jq_expr} = ${CMD_REQUIRED}" <<< "${CMD_REGISTRY_ra_ref}" 2> /dev/null
       ) || return $?
+
+   if [[ -n "${CMD_NOTE}" ]]; then
+      json_set_value "${CMD_REGISTRY_ra_ref}" CMD_REGISTRY_ra_ref \
+         "${CMD_NOTE}" \
+         "arguments" "${CMD_NAME}" "note"  \
+         || return $?
+   fi
 
    if [[ ! -z "${CMD_ALLOWED_VALUES}" ]]; then
       local -a allowed_values=( )
@@ -255,6 +277,9 @@ function register_argument( )
 #      Must match the following pattern:
 #         ^[A-Za-z_][A-Za-z0-9_-]*$
 #
+#   --note=<text>
+#      Human-readable description of the option.
+#
 # Return values:
 #   0  Success.
 #   1  Invalid function arguments or registration error.
@@ -276,6 +301,7 @@ Usage:
    register_option
       --registry=<registry>
       --name=<option_name>
+      [--note=<text>]
 
 Options:
    --registry=<registry>
@@ -287,6 +313,12 @@ Options:
       The name must match the following pattern:
 
          ^[A-Za-z_][A-Za-z0-9_-]*$
+
+   --note=<text>
+      Human-readable description of the option.
+
+      The text is stored in the registry metadata and is not interpreted by
+      the parser.
 
 Return values:
    0   Success.
@@ -300,6 +332,7 @@ function register_option( )
 {
    local CMD_REGISTRY_NAME=""
    local CMD_NAME=""
+   local CMD_NOTE=""
    for option in "${@}"; do
       case ${option} in
          --registry=*)
@@ -307,6 +340,9 @@ function register_option( )
          ;;
          --name=*)
             CMD_NAME="${option#*=}"
+         ;;
+         --note=*)
+            CMD_NOTE="${option#*=}"
          ;;
          *)
             log_error "undefined option: '${option}'"
@@ -354,6 +390,13 @@ function register_option( )
    CMD_REGISTRY_ro_ref=$(
          jq -e "${jq_expr} = false" <<< "${CMD_REGISTRY_ro_ref}" 2> /dev/null
       ) || return $?
+
+   if [[ -n "${CMD_NOTE}" ]]; then
+      json_set_value "${CMD_REGISTRY_ro_ref}" CMD_REGISTRY_ro_ref \
+         "${CMD_NOTE}" \
+         "options" "${CMD_NAME}" "note"  \
+         || return $?
+   fi
 
    return 0
 }
