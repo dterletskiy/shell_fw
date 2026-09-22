@@ -4,6 +4,7 @@ source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/log.sh"
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/json.sh"
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/array.sh"
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/types.sh"
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/numeric.sh"
 
 
 
@@ -684,19 +685,23 @@ function validate_parameters( )
 ###############################################################################
 # Get the effective value of a registered argument.
 #
-# The function retrieves the first value associated with the specified
-# argument.
+# The function retrieves a value associated with the specified argument by
+# index.
 #
 # The returned value is selected according to the following priority:
 #
-#   1. The first value explicitly specified by the user.
-#   2. The first default value registered for the argument.
+#   1. The explicitly specified value with the requested index.
+#   2. The default value with the requested index.
 #
 # As a result, the caller does not need to distinguish between explicitly
 # provided values and default values.
 #
-# If neither an explicitly defined value nor a default value exists, the
-# function returns an error.
+# If explicitly defined values exist but the requested index is missing, the
+# function returns an error. Default values are used only when no explicitly
+# defined values exist.
+#
+# If no explicitly defined values exist and the requested index is missing in
+# the default values, the function returns an error.
 #
 # String values are returned as plain shell strings, not as JSON-quoted strings.
 #
@@ -706,6 +711,10 @@ function validate_parameters( )
 #
 #   --name=<argument_name>
 #      Name of the registered argument.
+#
+#   --index=<index>
+#      Zero-based index of the argument value to retrieve.
+#      Optional. Defaults to 0.
 #
 #   --result=<variable>
 #      Name of the variable that receives the argument value.
@@ -719,7 +728,8 @@ function validate_parameters( )
 #   5  Invalid argument name.
 #   6  '--result' was not specified.
 #   7  Result variable does not exist.
-#   8  The argument has neither a defined value nor a default value.
+#   8  Invalid index.
+#   9  The requested value does not exist.
 ###############################################################################
 function get_argument_help( )
 {
@@ -728,23 +738,28 @@ function get_argument_help( )
 Description:
    Get the effective value of a registered argument.
 
-   The function returns the first value associated with the specified
-   argument.
+   The function returns the value associated with the specified argument at
+   the requested zero-based index.
 
    The returned value is selected according to the following priority:
 
-      1. The first value explicitly specified by the user.
+      1. The explicitly specified value with the requested index.
 
-      2. The first registered default value.
+      2. The registered default value with the requested index.
 
    This allows the caller to access the effective argument value without
    checking whether it was supplied on the command line or obtained from
    the default values.
 
+   Default values are used only when the argument has no explicitly defined
+   values. If defined values exist but the requested index is missing, the
+   function returns an error.
+
 Usage:
    get_argument
       --registry=<registry>
       --name=<argument_name>
+      [--index=<index>]
       --result=<variable>
 
 Options:
@@ -758,16 +773,22 @@ Options:
 
          ^[A-Za-z_][A-Za-z0-9_-]*$
 
+   --index=<index>
+      Zero-based index of the value to retrieve.
+
+      Optional. Defaults to 0.
+
    --result=<variable>
       Name of the variable that receives the argument value.
 
 Notes:
-   • Only the first value of the argument is returned.
+   • If '--index' is omitted, element 0 is retrieved.
 
-   • If the argument accepts multiple values, only element 0 is retrieved.
+   • If explicitly defined values exist, only those values are considered.
+     Missing requested indexes are reported as errors.
 
-   • If neither a defined value nor a default value exists, the function
-     returns an error.
+   • If no explicitly defined values exist, the same index is read from the
+     default values. Missing requested indexes are reported as errors.
 
    • String values are returned as plain shell strings, not as JSON-quoted
      strings.
@@ -789,7 +810,9 @@ Return values:
 
    7   Result variable does not exist.
 
-   8   The argument has neither a defined value nor a default value.
+   8   Invalid index.
+
+   9   The requested value does not exist.
 
 EOF
 }
@@ -799,6 +822,7 @@ function get_argument( )
    local CMD_REGISTRY_NAME=""
    local CMD_NAME
    local CMD_RESULT_NAME=""
+   local CMD_INDEX="0"
    for option in "${@}"; do
       case ${option} in
          --registry=*)
@@ -809,6 +833,9 @@ function get_argument( )
          ;;
          --result=*)
             CMD_RESULT_NAME="${option#*=}"
+         ;;
+         --index=*)
+            CMD_INDEX="${option#*=}"
          ;;
          *)
             log_error "undefined option: '${option}'"
@@ -854,18 +881,50 @@ function get_argument( )
    fi
    local -n CMD_RESULT_ga_ref="${CMD_RESULT_NAME}"
 
-
-
-   json_get_value "${CMD_REGISTRY_ga_ref}" \
-      CMD_RESULT_ga_ref "arguments" "${CMD_NAME}" "values" "defined" 0
-   local rc=$?
-   if (( rc != 0 )); then
-      json_get_value "${CMD_REGISTRY_ga_ref}" \
-         CMD_RESULT_ga_ref "arguments" "${CMD_NAME}" "values" "default" 0 \
-         || return 8
+   if ! is_non_negative_integer "${CMD_INDEX}"; then
+      log_error "Invalid index '${CMD_INDEX}'"
+      get_argument_help
+      return 8
    fi
 
-   return 0
+   local CMD_INDEX_NUMBER=$(( 10#${CMD_INDEX#+} ))
+   local -a defined_values=( )
+   if json_get_array "${CMD_REGISTRY_ga_ref}" \
+      defined_values "arguments" "${CMD_NAME}" "values" "defined"; then
+      if [[ ${#defined_values[@]} -gt 0 ]]; then
+         if [[ ${CMD_INDEX_NUMBER} -ge ${#defined_values[@]} ]]; then
+            log_error "Defined value with index '${CMD_INDEX}' for argument '${CMD_NAME}' does not exist"
+            return 9
+         fi
+
+         # json_get_array is used only to check that the requested index
+         # exists. Its elements are compact JSON values, so strings keep JSON
+         # quotes. Read the selected scalar through json_get_value to preserve
+         # the get_argument contract and return a raw shell string.
+         json_get_value "${CMD_REGISTRY_ga_ref}" \
+            CMD_RESULT_ga_ref \
+            "arguments" "${CMD_NAME}" "values" "defined" "${CMD_INDEX_NUMBER}" \
+            || return 9
+         return 0
+      fi
+   fi
+
+   local -a default_values=( )
+   if json_get_array "${CMD_REGISTRY_ga_ref}" \
+      default_values "arguments" "${CMD_NAME}" "values" "default"; then
+      if [[ ${CMD_INDEX_NUMBER} -lt ${#default_values[@]} ]]; then
+         # See the defined-values branch above: json_get_value returns strings
+         # without JSON quotes, unlike json_get_array elements.
+         json_get_value "${CMD_REGISTRY_ga_ref}" \
+            CMD_RESULT_ga_ref \
+            "arguments" "${CMD_NAME}" "values" "default" "${CMD_INDEX_NUMBER}" \
+            || return 9
+         return 0
+      fi
+   fi
+
+   log_error "Value with index '${CMD_INDEX}' for argument '${CMD_NAME}' does not exist"
+   return 9
 }
 
 
