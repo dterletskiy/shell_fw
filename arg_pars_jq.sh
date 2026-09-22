@@ -855,7 +855,6 @@ function get_argument_value( )
       get_argument_value_help
       return 3
    fi
-   local -n CMD_REGISTRY_ga_ref="${CMD_REGISTRY_NAME}"
 
    if [[ -z "${CMD_NAME}" ]]; then
       log_error "'--name' must be defined"
@@ -888,43 +887,20 @@ function get_argument_value( )
    fi
 
    local CMD_INDEX_NUMBER=$(( 10#${CMD_INDEX#+} ))
-   local -a defined_values=( )
-   if json_get_array "${CMD_REGISTRY_ga_ref}" \
-      defined_values "arguments" "${CMD_NAME}" "values" "defined"; then
-      if [[ ${#defined_values[@]} -gt 0 ]]; then
-         if [[ ${CMD_INDEX_NUMBER} -ge ${#defined_values[@]} ]]; then
-            log_error "Defined value with index '${CMD_INDEX}' for argument '${CMD_NAME}' does not exist"
-            return 9
-         fi
+   local -a CMD_VALUES_ga=( )
+   get_argument_values \
+      --registry="${CMD_REGISTRY_NAME}" \
+      --name="${CMD_NAME}" \
+      --result=CMD_VALUES_ga \
+      || return 9
 
-         # json_get_array is used only to check that the requested index
-         # exists. Its elements are compact JSON values, so strings keep JSON
-         # quotes. Read the selected scalar through json_get_value to preserve
-         # the get_argument_value contract and return a raw shell string.
-         json_get_value "${CMD_REGISTRY_ga_ref}" \
-            CMD_RESULT_ga_ref \
-            "arguments" "${CMD_NAME}" "values" "defined" "${CMD_INDEX_NUMBER}" \
-            || return 9
-         return 0
-      fi
+   if [[ ${CMD_INDEX_NUMBER} -ge ${#CMD_VALUES_ga[@]} ]]; then
+      log_error "Value with index '${CMD_INDEX}' for argument '${CMD_NAME}' does not exist"
+      return 9
    fi
 
-   local -a default_values=( )
-   if json_get_array "${CMD_REGISTRY_ga_ref}" \
-      default_values "arguments" "${CMD_NAME}" "values" "default"; then
-      if [[ ${CMD_INDEX_NUMBER} -lt ${#default_values[@]} ]]; then
-         # See the defined-values branch above: json_get_value returns strings
-         # without JSON quotes, unlike json_get_array elements.
-         json_get_value "${CMD_REGISTRY_ga_ref}" \
-            CMD_RESULT_ga_ref \
-            "arguments" "${CMD_NAME}" "values" "default" "${CMD_INDEX_NUMBER}" \
-            || return 9
-         return 0
-      fi
-   fi
-
-   log_error "Value with index '${CMD_INDEX}' for argument '${CMD_NAME}' does not exist"
-   return 9
+   CMD_RESULT_ga_ref="${CMD_VALUES_ga[${CMD_INDEX_NUMBER}]}"
+   return 0
 }
 
 
@@ -1103,24 +1079,24 @@ function get_argument_values( )
    fi
    local -n CMD_RESULT_gas_ref="${CMD_RESULT_NAME}"
 
-   local -a values=( )
+   local -a CMD_VALUES_gas=( )
    local source="defined"
    if ! json_get_array "${CMD_REGISTRY_gas_ref}" \
-      values "arguments" "${CMD_NAME}" "values" "${source}"; then
+      CMD_VALUES_gas "arguments" "${CMD_NAME}" "values" "${source}"; then
       source="default"
       json_get_array "${CMD_REGISTRY_gas_ref}" \
-         values "arguments" "${CMD_NAME}" "values" "${source}" \
+         CMD_VALUES_gas "arguments" "${CMD_NAME}" "values" "${source}" \
          || return 9
    fi
 
-   if [[ ${#values[@]} -eq 0 ]]; then
+   if [[ ${#CMD_VALUES_gas[@]} -eq 0 ]]; then
       return 9
    fi
 
    CMD_RESULT_gas_ref=( )
 
    local i
-   for i in "${!values[@]}"; do
+   for i in "${!CMD_VALUES_gas[@]}"; do
       local value
 
       # json_get_array is used only to enumerate effective values. Its
