@@ -48,19 +48,19 @@ function test_arg_pars_jq( )
    local result
 
    log_info "Get argument 'project'"
-   get_argument --registry=__PARAMETERS__ --name="project" --result=result
+   get_argument_value --registry=__PARAMETERS__ --name="project" --result=result
    echo "   $?: ${result}"
 
    log_info "Get argument 'action'"
-   get_argument --registry=__PARAMETERS__ --name="action" --result=result
+   get_argument_value --registry=__PARAMETERS__ --name="action" --result=result
    echo "   $?: ${result}"
 
    log_info "Get argument 'target'"
-   get_argument --registry=__PARAMETERS__ --name="target" --result=result
+   get_argument_value --registry=__PARAMETERS__ --name="target" --result=result
    echo "   $?: ${result}"
 
    log_info "Get argument 'xxxxx'"
-   get_argument --registry=__PARAMETERS__ --name="xxxxx" --result=result
+   get_argument_value --registry=__PARAMETERS__ --name="xxxxx" --result=result
    echo "   $?: ${result}"
 
    log_info "Get option 'debug'"

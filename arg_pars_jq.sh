@@ -731,7 +731,7 @@ function validate_parameters( )
 #   8  Invalid index.
 #   9  The requested value does not exist.
 ###############################################################################
-function get_argument_help( )
+function get_argument_value_help( )
 {
    cat << EOF
 
@@ -756,7 +756,7 @@ Description:
    function returns an error.
 
 Usage:
-   get_argument
+   get_argument_value
       --registry=<registry>
       --name=<argument_name>
       [--index=<index>]
@@ -817,7 +817,7 @@ Return values:
 EOF
 }
 
-function get_argument( )
+function get_argument_value( )
 {
    local CMD_REGISTRY_NAME=""
    local CMD_NAME
@@ -839,7 +839,7 @@ function get_argument( )
          ;;
          *)
             log_error "undefined option: '${option}'"
-            get_argument_help
+            get_argument_value_help
             return 1
          ;;
       esac
@@ -847,43 +847,43 @@ function get_argument( )
 
    if [[ -z "${CMD_REGISTRY_NAME}" ]]; then
       log_error "'--registry' must be defined"
-      get_argument_help
+      get_argument_value_help
       return 2
    fi
    if ! declare -p "${CMD_REGISTRY_NAME}" &>/dev/null; then
       log_error "Registry '${CMD_REGISTRY_NAME}' does not exist"
-      get_argument_help
+      get_argument_value_help
       return 3
    fi
    local -n CMD_REGISTRY_ga_ref="${CMD_REGISTRY_NAME}"
 
    if [[ -z "${CMD_NAME}" ]]; then
       log_error "'--name' must be defined"
-      get_argument_help
+      get_argument_value_help
       return 4
    fi
    if ! __test_parameter_name__ "${CMD_NAME}"; then
       log_error "Invalid argument name '${CMD_NAME}'"
       log_error "Allowed pattern: ^[A-Za-z_][A-Za-z0-9_-]*$"
-      get_argument_help
+      get_argument_value_help
       return 5
    fi
 
    if [[ -z "${CMD_RESULT_NAME}" ]]; then
       log_error "'--result' must be defined"
-      get_argument_help
+      get_argument_value_help
       return 6
    fi
    if ! declare -p "${CMD_RESULT_NAME}" &>/dev/null; then
       log_error "Result '${CMD_RESULT_NAME}' does not exist"
-      get_argument_help
+      get_argument_value_help
       return 7
    fi
    local -n CMD_RESULT_ga_ref="${CMD_RESULT_NAME}"
 
    if ! is_non_negative_integer "${CMD_INDEX}"; then
       log_error "Invalid index '${CMD_INDEX}'"
-      get_argument_help
+      get_argument_value_help
       return 8
    fi
 
@@ -900,7 +900,7 @@ function get_argument( )
          # json_get_array is used only to check that the requested index
          # exists. Its elements are compact JSON values, so strings keep JSON
          # quotes. Read the selected scalar through json_get_value to preserve
-         # the get_argument contract and return a raw shell string.
+         # the get_argument_value contract and return a raw shell string.
          json_get_value "${CMD_REGISTRY_ga_ref}" \
             CMD_RESULT_ga_ref \
             "arguments" "${CMD_NAME}" "values" "defined" "${CMD_INDEX_NUMBER}" \
