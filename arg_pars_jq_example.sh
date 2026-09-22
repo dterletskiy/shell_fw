@@ -59,6 +59,12 @@ function test_arg_pars_jq( )
    get_argument_value --registry=__PARAMETERS__ --name="target" --result=result
    echo "   $?: ${result}"
 
+   local -a results
+
+   log_info "Get argument values 'target'"
+   get_argument_values --registry=__PARAMETERS__ --name="target" --result=results
+   echo "   $?: ${results[*]}"
+
    log_info "Get argument 'xxxxx'"
    get_argument_value --registry=__PARAMETERS__ --name="xxxxx" --result=result
    echo "   $?: ${result}"

@@ -930,6 +930,217 @@ function get_argument_value( )
 
 
 ###############################################################################
+# Get all effective values of a registered argument.
+#
+# The function retrieves all values associated with the specified argument.
+#
+# The returned values are selected according to the following priority:
+#
+#   1. All explicitly specified values.
+#   2. All default values registered for the argument.
+#
+# Default values are used only when no explicitly defined values exist.
+#
+# String values are returned as plain shell strings, not as JSON-quoted strings.
+#
+# Parameters:
+#   --registry=<name>
+#      Name of the registry variable.
+#
+#   --name=<argument_name>
+#      Name of the registered argument.
+#
+#   --result=<array_variable>
+#      Name of the indexed array variable that receives the argument values.
+#
+# Return values:
+#   0   Success.
+#   1   Invalid function option.
+#   2   '--registry' was not specified.
+#   3   Registry variable does not exist.
+#   4   '--name' was not specified.
+#   5   Invalid argument name.
+#   6   '--result' was not specified.
+#   7   Result variable does not exist.
+#   8   Result variable is not an indexed array.
+#   9   The argument has neither defined values nor default values.
+###############################################################################
+function get_argument_values_help( )
+{
+   cat << EOF
+
+Description:
+   Get all effective values of a registered argument.
+
+   The function returns all values associated with the specified argument.
+
+   The returned values are selected according to the following priority:
+
+      1. All explicitly specified values.
+
+      2. All registered default values.
+
+   Default values are used only when the argument has no explicitly defined
+   values.
+
+Usage:
+   get_argument_values
+      --registry=<registry>
+      --name=<argument_name>
+      --result=<array_variable>
+
+Options:
+   --registry=<registry>
+      Name of the registry variable.
+
+   --name=<argument_name>
+      Name of the registered argument.
+
+      The name must match the following pattern:
+
+         ^[A-Za-z_][A-Za-z0-9_-]*$
+
+   --result=<array_variable>
+      Name of the indexed array variable that receives the argument values.
+
+Notes:
+   • If explicitly defined values exist, only those values are returned.
+
+   • If no explicitly defined values exist, all default values are returned.
+
+   • If neither defined values nor default values exist, the function returns
+     an error.
+
+   • String values are returned as plain shell strings, not as JSON-quoted
+     strings.
+
+Return values:
+   0   Success.
+
+   1   Invalid function option.
+
+   2   '--registry' was not specified.
+
+   3   Registry variable does not exist.
+
+   4   '--name' was not specified.
+
+   5   Invalid argument name.
+
+   6   '--result' was not specified.
+
+   7   Result variable does not exist.
+
+   8   Result variable is not an indexed array.
+
+   9   The argument has neither defined values nor default values.
+
+EOF
+}
+
+function get_argument_values( )
+{
+   local CMD_REGISTRY_NAME=""
+   local CMD_NAME
+   local CMD_RESULT_NAME=""
+   for option in "${@}"; do
+      case ${option} in
+         --registry=*)
+            CMD_REGISTRY_NAME="${option#*=}"
+         ;;
+         --name=*)
+            CMD_NAME="${option#*=}"
+         ;;
+         --result=*)
+            CMD_RESULT_NAME="${option#*=}"
+         ;;
+         *)
+            log_error "undefined option: '${option}'"
+            get_argument_values_help
+            return 1
+         ;;
+      esac
+   done
+
+   if [[ -z "${CMD_REGISTRY_NAME}" ]]; then
+      log_error "'--registry' must be defined"
+      get_argument_values_help
+      return 2
+   fi
+   if ! declare -p "${CMD_REGISTRY_NAME}" &>/dev/null; then
+      log_error "Registry '${CMD_REGISTRY_NAME}' does not exist"
+      get_argument_values_help
+      return 3
+   fi
+   local -n CMD_REGISTRY_gas_ref="${CMD_REGISTRY_NAME}"
+
+   if [[ -z "${CMD_NAME}" ]]; then
+      log_error "'--name' must be defined"
+      get_argument_values_help
+      return 4
+   fi
+   if ! __test_parameter_name__ "${CMD_NAME}"; then
+      log_error "Invalid argument name '${CMD_NAME}'"
+      log_error "Allowed pattern: ^[A-Za-z_][A-Za-z0-9_-]*$"
+      get_argument_values_help
+      return 5
+   fi
+
+   if [[ -z "${CMD_RESULT_NAME}" ]]; then
+      log_error "'--result' must be defined"
+      get_argument_values_help
+      return 6
+   fi
+   if ! declare -p "${CMD_RESULT_NAME}" &>/dev/null; then
+      log_error "Result '${CMD_RESULT_NAME}' does not exist"
+      get_argument_values_help
+      return 7
+   fi
+   if ! test_variable_type "${CMD_RESULT_NAME}" array; then
+      log_error "Result '${CMD_RESULT_NAME}' must be an indexed array"
+      get_argument_values_help
+      return 8
+   fi
+   local -n CMD_RESULT_gas_ref="${CMD_RESULT_NAME}"
+
+   local -a values=( )
+   local source="defined"
+   if ! json_get_array "${CMD_REGISTRY_gas_ref}" \
+      values "arguments" "${CMD_NAME}" "values" "${source}"; then
+      source="default"
+      json_get_array "${CMD_REGISTRY_gas_ref}" \
+         values "arguments" "${CMD_NAME}" "values" "${source}" \
+         || return 9
+   fi
+
+   if [[ ${#values[@]} -eq 0 ]]; then
+      return 9
+   fi
+
+   CMD_RESULT_gas_ref=( )
+
+   local i
+   for i in "${!values[@]}"; do
+      local value
+
+      # json_get_array is used only to enumerate effective values. Its
+      # elements are compact JSON values, so strings keep JSON quotes. Read
+      # every selected scalar through json_get_value to return raw shell
+      # strings in the result array.
+      json_get_value "${CMD_REGISTRY_gas_ref}" \
+         value \
+         "arguments" "${CMD_NAME}" "values" "${source}" "${i}" \
+         || return 9
+
+      CMD_RESULT_gas_ref+=( "${value}" )
+   done
+
+   return 0
+}
+
+
+
+###############################################################################
 # Get the state of a registered option.
 #
 # The function retrieves the current state of the specified option.
