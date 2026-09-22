@@ -325,6 +325,62 @@ function get_e_digits( )
 
 
 
+# Description:
+# 'get_phi_digits' prints the golden ratio with the requested number of digits
+# after the decimal point.
+#
+# Parameters:
+# $1 - Number of digits after the decimal point. Must be a non-negative integer.
+#
+# Behavior:
+# - Uses 'bc -l' to calculate the golden ratio as (1 + sqrt(5)) / 2.
+# - Calculates with extra precision and then truncates the fractional part to
+#   the requested length.
+# - If the requested length is 0, prints only the integer part: 1.
+# - Returns 1 and logs an error if the number of arguments is invalid, the
+#   argument is invalid, 'bc' is missing, or the calculation fails.
+#
+# Example:
+# get_phi_digits 5
+# # 1.61803
+function get_phi_digits( )
+{
+   if [[ 1 -ne $# ]]; then
+      log_error "Usage: get_phi_digits <non-negative-integer>"
+      return 1
+   fi
+
+   local digits="${1}"
+
+   if ! is_non_negative_integer "${digits}"; then
+      log_error "Usage: get_phi_digits <non-negative-integer>"
+      return 1
+   fi
+
+   if ! command -v bc &> /dev/null; then
+      log_error "'bc' is required"
+      return 1
+   fi
+
+   local scale=$(( digits + 10 ))
+   local value
+   if ! value="$( BC_LINE_LENGTH=0 bc -l <<< "scale=${scale}; (1 + sqrt(5)) / 2" 2> /dev/null )"; then
+      log_error "'bc' calculation failed"
+      return 1
+   fi
+   local integer="${value%%.*}"
+
+   if [[ 0 -eq ${digits} ]]; then
+      printf "%s\n" "${integer}"
+      return 0
+   fi
+
+   local fraction="${value#*.}"
+   printf "%s.%s\n" "${integer}" "${fraction:0:${digits}}"
+}
+
+
+
 function __test_numeric__( )
 {
    declare -a VALUES=( 1 0 -0 -1 1.0 0.0 -0.0 -1.0 )
