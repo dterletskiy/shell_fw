@@ -53,6 +53,20 @@ function __json_build_jq_expr__( )
 
 
 
+# Build a jq path array without interpolating keys into jq source code.
+function __json_build_jq_path__( )
+{
+   local -n __json_path_ref=$1
+   shift
+
+   __json_path_ref=$( jq -nc --args '
+      $ARGS.positional
+      | map(if test("^[0-9]+$") then tonumber else . end)
+   ' "$@" ) || return 1
+}
+
+
+
 function json_validate( )
 {
    local json=${1}
@@ -771,6 +785,131 @@ function json_set_value( )
    fi
 
    out_ref="$new_json"
+   return 0
+}
+
+
+
+#
+# Set a JSON value by path, creating missing path elements as jq permits.
+#
+# Arguments:
+#   $1  - source JSON document
+#   $2  - output variable name
+#   $3  - JSON value to set (object, array, string, number, boolean, or null)
+#   $4+ - path (keys and/or numeric array indices); empty path replaces root
+#
+# Return codes:
+#   0   - success
+#   1   - invalid source JSON
+#   2   - invalid JSON value
+#   3   - path update or jq evaluation failed
+#   127 - jq is unavailable
+#
+# Existing values at the target path are replaced. The output variable is
+# changed only on success. Quote the JSON value, including string quotes.
+#
+# Example:
+#   json_set_json_value "$json" updated '{"enabled":true}' ticker SPY
+#   json_set_json_value "$json" updated 'false' ticker SPY enabled
+#
+function json_set_json_value( )
+{
+   local __json_source="$1"
+   local __json_output_name="$2"
+   local __json_value="$3"
+   shift 3
+
+   test_required_util "jq" || return 127
+   json_validate "$__json_source" || return 1
+   jq -n --argjson value "$__json_value" '$value | type' \
+      > /dev/null 2>&1 || return 2
+
+   local __json_path
+   __json_build_jq_path__ __json_path "$@" || return 3
+
+   local __json_result
+   __json_result=$( jq -c \
+      --argjson path "$__json_path" \
+      --argjson value "$__json_value" \
+      'setpath($path; $value)' <<< "$__json_source" 2> /dev/null ) || return 3
+
+   local -n __json_output_ref=$__json_output_name
+   __json_output_ref="$__json_result"
+   return 0
+}
+
+
+
+#
+# Add an object member without replacing an existing key.
+#
+# Arguments:
+#   $1  - source JSON document
+#   $2  - output variable name
+#   $3  - JSON object to add; use '{}' for an empty object
+#   $4+ - path to the new member (parent keys/indices, then member key)
+#
+# Return codes:
+#   0   - success
+#   1   - invalid source JSON
+#   2   - value is invalid JSON or is not an object
+#   3   - missing path or parent is not an object
+#   4   - member key already exists
+#   5   - jq evaluation failed
+#   127 - jq is unavailable
+#
+# The parent must already exist as an object. The final path element is always
+# an object key, including when it consists only of digits. The output variable
+# is changed only on success.
+#
+# Example:
+#   json_add_object "$json" updated '{}' ticker SPY
+#   json_add_object "$json" updated '{"period":"max"}' ticker VOO
+#
+function json_add_object( )
+{
+   local __json_source="$1"
+   local __json_output_name="$2"
+   local __json_object="$3"
+   shift 3
+
+   [[ $# -gt 0 ]] || return 3
+   test_required_util "jq" || return 127
+   json_validate "$__json_source" || return 1
+   jq -ne --argjson value "$__json_object" '$value | type == "object"' \
+      > /dev/null 2>&1 || return 2
+
+   local __json_key="${@: -1}"
+   local __json_parent_count=$(( $# - 1 ))
+   local __json_parent_path
+   __json_build_jq_path__ __json_parent_path \
+      "${@:1:__json_parent_count}" || return 5
+
+   local __json_result __json_status
+   __json_result=$( jq -c \
+      --argjson parent "$__json_parent_path" \
+      --arg key "$__json_key" \
+      --argjson value "$__json_object" '
+         if ((try getpath($parent) catch null) | type) != "object" then
+            halt_error(10)
+         elif (getpath($parent) | has($key)) then
+            halt_error(11)
+         else
+            setpath($parent + [$key]; $value)
+         end
+      ' <<< "$__json_source" 2> /dev/null )
+   __json_status=$?
+
+   case "$__json_status" in
+      0) ;;
+      10) return 3 ;;
+      11) return 4 ;;
+      *) return 5 ;;
+   esac
+
+   local -n __json_output_ref=$__json_output_name
+   __json_output_ref="$__json_result"
    return 0
 }
 

@@ -147,3 +147,15 @@ json_set_value "${json}" updated_json "release" project settings mode
 json_add_array_value "${updated_json}" updated_json "tests" project features
 
 printf "%s\n" "${updated_json}" | jq .
+
+
+
+print_section "Add and update JSON objects"
+ticker_json='{"ticker":{}}'
+spy_json='{"date":{"period":"max","interval":"1d"},"category":"ETF"}'
+
+json_add_object "$ticker_json" ticker_json '{}' ticker VOO
+json_add_object "$ticker_json" ticker_json "$spy_json" ticker SPY
+json_set_json_value "$ticker_json" ticker_json 'true' ticker SPY enabled
+
+printf "%s\n" "$ticker_json" | jq .

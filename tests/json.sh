@@ -216,6 +216,96 @@ declare updated_mode
 json_get_string "${updated_json}" updated_mode settings mode
 __test_assert_eq__ "json_set_value updates nested string value" "release" "${updated_mode}"
 
+declare ticker_json='{"ticker":{}}'
+declare added_json
+__test_assert_success__ "json_add_object creates an empty ticker object" \
+   json_add_object "$ticker_json" added_json '{}' ticker SPY
+__test_assert_success__ "json_add_object stores an object, not a string" \
+   json_test_type "$added_json" object ticker SPY
+__test_assert_eq__ "json_add_object preserves the original document" \
+   '{"ticker":{}}' "$ticker_json"
+
+declare spy_object='{"date":{"period":"max","interval":"1d"},"category":"ETF"}'
+__test_assert_success__ "json_add_object stores a populated object" \
+   json_add_object "$ticker_json" added_json "$spy_object" ticker SPY
+declare spy_period
+json_get_string "$added_json" spy_period ticker SPY date period
+__test_assert_eq__ "json_add_object preserves nested values" "max" "$spy_period"
+
+declare unchanged_json='unchanged'
+json_add_object "$added_json" unchanged_json '{}' ticker SPY
+__test_assert_eq__ "json_add_object rejects an existing key" "4" "$?"
+__test_assert_eq__ "json_add_object leaves output unchanged on duplicate" \
+   'unchanged' "$unchanged_json"
+json_add_object "$ticker_json" unchanged_json '{}' missing SPY
+__test_assert_eq__ "json_add_object rejects a missing parent" "3" "$?"
+json_add_object '{"ticker":[]}' unchanged_json '{}' ticker SPY
+__test_assert_eq__ "json_add_object rejects a non-object parent" "3" "$?"
+json_add_object "$ticker_json" unchanged_json '[]' ticker SPY
+__test_assert_eq__ "json_add_object rejects a non-object value" "2" "$?"
+json_add_object "$ticker_json" unchanged_json '{' ticker SPY
+__test_assert_eq__ "json_add_object rejects invalid JSON value" "2" "$?"
+json_add_object "$invalid_json" unchanged_json '{}' ticker SPY
+__test_assert_eq__ "json_add_object rejects invalid source JSON" "1" "$?"
+__test_assert_eq__ "json_add_object preserves output on errors" \
+   'unchanged' "$unchanged_json"
+
+__test_assert_success__ "json_add_object treats numeric key as object key" \
+   json_add_object "$ticker_json" added_json '{}' ticker 123
+__test_assert_eq__ "json_add_object stores numeric key under ticker" \
+   'object' "$(jq -r '.ticker["123"] | type' <<< "$added_json")"
+__test_assert_success__ "json_add_object accepts quoted object keys" \
+   json_add_object "$ticker_json" added_json '{}' ticker 'SPY"Q'
+__test_assert_eq__ "json_add_object escapes quoted object keys" \
+   'object' "$(jq -r --arg key 'SPY"Q' '.ticker[$key] | type' <<< "$added_json")"
+declare in_place_json='{"ticker":{}}'
+__test_assert_success__ "json_add_object supports same input and output variable" \
+   json_add_object "$in_place_json" in_place_json '{}' ticker SPY
+__test_assert_eq__ "json_add_object updates caller variable in place" \
+   '{"ticker":{"SPY":{}}}' "$in_place_json"
+
+__test_assert_success__ "json_set_json_value inserts an object" \
+   json_set_json_value "$ticker_json" added_json "$spy_object" ticker SPY
+__test_assert_success__ "json_set_json_value preserves object type" \
+   json_test_type "$added_json" object ticker SPY
+__test_assert_success__ "json_set_json_value replaces an existing object" \
+   json_set_json_value "$added_json" added_json '{"category":"Index"}' ticker SPY
+declare spy_category
+json_get_string "$added_json" spy_category ticker SPY category
+__test_assert_eq__ "json_set_json_value writes replacement object" \
+   'Index' "$spy_category"
+__test_assert_success__ "json_set_json_value writes JSON boolean false" \
+   json_set_json_value "$added_json" added_json 'false' ticker SPY enabled
+__test_assert_eq__ "json_set_json_value keeps boolean type" \
+   'boolean' "$(jq -r '.ticker.SPY.enabled | type' <<< "$added_json")"
+__test_assert_success__ "json_set_json_value writes JSON null" \
+   json_set_json_value "$added_json" added_json 'null' ticker SPY note
+__test_assert_eq__ "json_set_json_value keeps null type" \
+   'null' "$(jq -r '.ticker.SPY.note | type' <<< "$added_json")"
+__test_assert_success__ "json_set_json_value writes an array" \
+   json_set_json_value "$added_json" added_json '[1,2]' ticker SPY values
+__test_assert_eq__ "json_set_json_value keeps array elements" \
+   '[1,2]' "$(jq -c '.ticker.SPY.values' <<< "$added_json")"
+__test_assert_success__ "json_set_json_value escapes path keys" \
+   json_set_json_value "$ticker_json" added_json '42' ticker 'SPY"Q' count
+__test_assert_eq__ "json_set_json_value writes numeric value at quoted key" \
+   '42' "$(jq -r --arg key 'SPY"Q' '.ticker[$key].count' <<< "$added_json")"
+__test_assert_success__ "json_set_json_value supports same input and output variable" \
+   json_set_json_value "$in_place_json" in_place_json '1' ticker SPY count
+__test_assert_eq__ "json_set_json_value updates caller variable in place" \
+   '{"ticker":{"SPY":{"count":1}}}' "$in_place_json"
+__test_assert_success__ "json_set_json_value creates missing nested objects" \
+   json_set_json_value "$ticker_json" added_json '"max"' ticker SPY date period
+__test_assert_eq__ "json_set_json_value preserves JSON string type" \
+   'string' "$(jq -r '.ticker.SPY.date.period | type' <<< "$added_json")"
+declare unchanged_value='unchanged'
+json_set_json_value "$ticker_json" unchanged_value 'not JSON' ticker SPY
+__test_assert_eq__ "json_set_json_value rejects invalid value" "2" "$?"
+json_set_json_value "$invalid_json" unchanged_value '{}' ticker SPY
+__test_assert_eq__ "json_set_json_value rejects invalid source JSON" "1" "$?"
+__test_assert_eq__ "json_set_json_value preserves output on error" \
+   'unchanged' "$unchanged_value"
+
 declare array_json
 json_add_array_value "${json}" array_json "tests" settings features
 declare -a updated_features
