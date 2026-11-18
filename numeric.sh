@@ -214,160 +214,102 @@ function add_numbers( )
 
 
 # Description:
-# 'get_pi_digits' prints pi with the requested number of digits after the
-# decimal point.
+# 'get_constant' prints a mathematical constant with the requested number of
+# digits after the decimal point.
 #
 # Parameters:
-# $1 - Number of digits after the decimal point. Must be a non-negative integer.
+# $1 - Name of the mathematical constant. Supported values:
+#      pi    - Pi (3.14159...).
+#      e     - Euler's number (2.71828...).
+#      phi   - Golden ratio (1.61803...).
+#      sqrt2 - Square root of 2 (1.41421...).
+#      sqrt3 - Square root of 3 (1.73205...).
+# $2 - Number of digits after the decimal point. Must be a non-negative integer.
 #
 # Behavior:
-# - Uses 'bc -l' to calculate pi as 4*a(1).
-# - Calculates with extra precision and then truncates the fractional part to
-#   the requested length.
-# - If the requested length is 0, prints only the integer part: 3.
-# - Returns 1 and logs an error if the number of arguments is invalid, the
-#   argument is invalid, 'bc' is missing, or the calculation fails.
+# - Uses 'bc -l' to calculate the requested mathematical constant.
+# - Calculates with 10 extra decimal digits of precision.
+# - Truncates the fractional part to the requested number of digits without
+#   rounding.
+# - Disables line wrapping in 'bc' using BC_LINE_LENGTH=0.
+# - If the requested number of digits is 0, prints only the integer part.
+# - Prints the result to standard output.
+# - Returns 0 on success.
+# - Returns 1 and logs an error if the number of arguments is incorrect, the
+#   constant name is unknown, the number of digits is invalid, 'bc' is missing,
+#   or the calculation fails.
 #
-# Example:
-# get_pi_digits 5
+# Examples:
+# get_constant pi 5
 # # 3.14159
-function get_pi_digits( )
-{
-   if [[ 1 -ne $# ]]; then
-      log_error "Usage: get_pi_digits <non-negative-integer>"
-      return 1
-   fi
-
-   local digits="${1}"
-
-   if ! is_non_negative_integer "${digits}"; then
-      log_error "Usage: get_pi_digits <non-negative-integer>"
-      return 1
-   fi
-
-   if ! command -v bc &> /dev/null; then
-      log_error "'bc' is required"
-      return 1
-   fi
-
-   local scale=$(( digits + 10 ))
-   local value
-   if ! value="$( BC_LINE_LENGTH=0 bc -l <<< "scale=${scale}; 4*a(1)" 2> /dev/null )"; then
-      log_error "'bc' calculation failed"
-      return 1
-   fi
-   local integer="${value%%.*}"
-
-   if [[ 0 -eq ${digits} ]]; then
-      printf "%s\n" "${integer}"
-      return 0
-   fi
-
-   local fraction="${value#*.}"
-   printf "%s.%s\n" "${integer}" "${fraction:0:${digits}}"
-}
-
-
-
-# Description:
-# 'get_e_digits' prints Euler's number with the requested number of digits
-# after the decimal point.
 #
-# Parameters:
-# $1 - Number of digits after the decimal point. Must be a non-negative integer.
-#
-# Behavior:
-# - Uses 'bc -l' to calculate Euler's number as e(1).
-# - Calculates with extra precision and then truncates the fractional part to
-#   the requested length.
-# - If the requested length is 0, prints only the integer part: 2.
-# - Returns 1 and logs an error if the number of arguments is invalid, the
-#   argument is invalid, 'bc' is missing, or the calculation fails.
-#
-# Example:
-# get_e_digits 5
+# get_constant e 5
 # # 2.71828
-function get_e_digits( )
-{
-   if [[ 1 -ne $# ]]; then
-      log_error "Usage: get_e_digits <non-negative-integer>"
-      return 1
-   fi
-
-   local digits="${1}"
-
-   if ! is_non_negative_integer "${digits}"; then
-      log_error "Usage: get_e_digits <non-negative-integer>"
-      return 1
-   fi
-
-   if ! command -v bc &> /dev/null; then
-      log_error "'bc' is required"
-      return 1
-   fi
-
-   local scale=$(( digits + 10 ))
-   local value
-   if ! value="$( BC_LINE_LENGTH=0 bc -l <<< "scale=${scale}; e(1)" 2> /dev/null )"; then
-      log_error "'bc' calculation failed"
-      return 1
-   fi
-   local integer="${value%%.*}"
-
-   if [[ 0 -eq ${digits} ]]; then
-      printf "%s\n" "${integer}"
-      return 0
-   fi
-
-   local fraction="${value#*.}"
-   printf "%s.%s\n" "${integer}" "${fraction:0:${digits}}"
-}
-
-
-
-# Description:
-# 'get_phi_digits' prints the golden ratio with the requested number of digits
-# after the decimal point.
 #
-# Parameters:
-# $1 - Number of digits after the decimal point. Must be a non-negative integer.
-#
-# Behavior:
-# - Uses 'bc -l' to calculate the golden ratio as (1 + sqrt(5)) / 2.
-# - Calculates with extra precision and then truncates the fractional part to
-#   the requested length.
-# - If the requested length is 0, prints only the integer part: 1.
-# - Returns 1 and logs an error if the number of arguments is invalid, the
-#   argument is invalid, 'bc' is missing, or the calculation fails.
-#
-# Example:
-# get_phi_digits 5
+# get_constant phi 5
 # # 1.61803
-function get_phi_digits( )
+#
+# get_constant sqrt2 5
+# # 1.41421
+#
+# get_constant sqrt3 5
+# # 1.73205
+#
+# get_constant pi 0
+# # 3
+function get_constant( )
 {
-   if [[ 1 -ne $# ]]; then
-      log_error "Usage: get_phi_digits <non-negative-integer>"
+   if [[ 2 -ne $# ]]; then
+      log_error "Usage: get_constant <constant-name> <non-negative-integer>"
       return 1
    fi
 
-   local digits="${1}"
+   local constant_name="${1}"
+   local digits="${2}"
 
    if ! is_non_negative_integer "${digits}"; then
-      log_error "Usage: get_phi_digits <non-negative-integer>"
+      log_error "Usage: get_constant <constant-name> <non-negative-integer>"
       return 1
    fi
+
+   digits="$( normalize_integer ${digits} )"
 
    if ! command -v bc &> /dev/null; then
       log_error "'bc' is required"
       return 1
    fi
 
+   local expression
+   case "${constant_name}" in
+      pi)
+         expression="4*a(1)"
+      ;;
+      e)
+         expression="e(1)"
+      ;;
+      phi)
+         expression="(1 + sqrt(5)) / 2"
+      ;;
+      sqrt2)
+         expression="sqrt(2)"
+      ;;
+      sqrt3)
+         expression="sqrt(3)"
+      ;;
+      *)
+         log_error "Unknown constant: '${constant_name}'"
+         return 1
+      ;;
+   esac
+
    local scale=$(( digits + 10 ))
+
    local value
-   if ! value="$( BC_LINE_LENGTH=0 bc -l <<< "scale=${scale}; (1 + sqrt(5)) / 2" 2> /dev/null )"; then
+   if ! value="$( BC_LINE_LENGTH=0 bc -l <<< "scale=${scale}; ${expression}" 2> /dev/null )"; then
       log_error "'bc' calculation failed"
       return 1
    fi
+
    local integer="${value%%.*}"
 
    if [[ 0 -eq ${digits} ]]; then
@@ -381,47 +323,11 @@ function get_phi_digits( )
 
 
 
-function __test_numeric__( )
+function normalize_integer( )
 {
-   declare -a VALUES=( 1 0 -0 -1 1.0 0.0 -0.0 -1.0 )
+   local value="${1}"
 
-   for VALUE in "${VALUES[@]}"; do
-      log_info "------------------------------------------------"
+   value="${value#"${value%%[!0]*}"}"
 
-      is_positive_integer "${VALUE}" && \
-         log_debug "'${VALUE}' - is positive integer" || \
-         log_error "'${VALUE}' - is not positive integer"
-
-      is_negative_integer "${VALUE}" && \
-         log_debug "'${VALUE}' - is negative integer" || \
-         log_error "'${VALUE}' - is not negative integer"
-
-      is_integer "${VALUE}" && \
-         log_debug "'${VALUE}' - is integer" || \
-         log_error "'${VALUE}' - is not integer"
-
-      is_positive_float "${VALUE}" && \
-         log_debug "'${VALUE}' - is positive float" || \
-         log_error "'${VALUE}' - is not positive float"
-
-      is_negative_float "${VALUE}" && \
-         log_debug "'${VALUE}' - is negative float" || \
-         log_error "'${VALUE}' - is not negative float"
-
-      is_float "${VALUE}" && \
-         log_debug "'${VALUE}' - is float" || \
-         log_error "'${VALUE}' - is not float"
-
-      is_positive_number "${VALUE}" && \
-         log_debug "'${VALUE}' - is positive number" || \
-         log_error "'${VALUE}' - is not positive number"
-
-      is_negative_number "${VALUE}" && \
-         log_debug "'${VALUE}' - is negative number" || \
-         log_error "'${VALUE}' - is not negative number"
-
-      is_number "${VALUE}" && \
-         log_debug "'${VALUE}' - is number" || \
-         log_error "'${VALUE}' - is not number"
-   done
+   printf "%s\n" "${value:-0}"
 }
